@@ -13,7 +13,7 @@ import { LitElement } from '@polymer/lit-element';
 export class MifView extends LitElement {
   static get properties() {
     return {
-      disabled: { type: Boolean },
+      disabled: { type: Boolean, attribute:true },
       path: { type: String },
     }
   }
@@ -24,8 +24,10 @@ export class MifView extends LitElement {
   }
 
   app(props) {
-  	var a = {};
-  	for(var k in props) {a['app' +k.charAt(0).toUpperCase() +k.substr(1)] = props[k]}
+    var a = {};
+    for(var k in props) {
+      a['app' +k.charAt(0).toUpperCase() +k.substr(1)] = props[k]
+    }
     window.dispatchEvent(new CustomEvent("app-customized", {detail: a}));
   }
 

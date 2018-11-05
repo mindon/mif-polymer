@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>mif-icon</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
+    <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
+
+  </head>
+  <body>
+    <test-fixture id="basic">
+      <template>
+      <script>
+        // MifIcon.Menu
+        // MifIcon.Minus
+        // MifIcon.Plus
+      </script>
+      </template>
+    </test-fixture>
+
+    <script type="module">
+      import 'axe-core/axe.min.js';
+      import {axeReport} from 'pwa-helpers/axe-report.js';
+
+      import {MifIcon} from '../../src/components/mif-icon.js';
+
+      suite('mif-icon tests', function() {
+        test('icon definitions', function() {
+          assert.ok(MifIcon);
+          assert.ok(MifIcon.Menu);
+          assert.ok(MifIcon.Minus);
+          assert.ok(MifIcon.Plus);
+        });
+      });
+    </script>
+  </body>
+</html>

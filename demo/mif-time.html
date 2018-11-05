@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+  <title>mif-time demo</title>
+
+  <script src="../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+
+  <script type="module">
+    import '@polymer/iron-demo-helpers/demo-pages-shared-styles';
+    import '@polymer/iron-demo-helpers/demo-snippet';
+    import '@polymer/paper-icon-button/paper-icon-button.js';
+    import '@polymer/iron-icons/iron-icons.js';
+  </script>
+
+  <custom-style>
+    <style is="custom-style" include="demo-pages-shared-styles">
+    </style>
+  </custom-style>
+  </head>
+  <body>
+  <div class="vertical-section-container centered">
+    <h3><paper-icon-button icon="arrow-back" onclick="location.href='/demo/'" title="Demos home"></paper-icon-button> mif-time demo</h3>
+    <demo-snippet>
+    <template>
+      <mif-demo></mif-demo>
+    </template>
+    </demo-snippet>
+  </div>
+
+<script type="module">
+import { LitElement, html } from '../node_modules/@polymer/lit-element';
+import '../src/components/mif-time.js';
+
+class MifDemo extends LitElement {
+  render() {
+  return html`
+  <mif-time id="t0" required label="日期" format="Y/m/d" @value-changed="${evt => console.log(evt.detail)}"
+    @next="${ evt => this.renderRoot.querySelector('#t1').focus() }"></mif-time>
+  <mif-time id="t1" label="日期范围" format="Y/m/d" range value="2018/10/05~2018/10/27" @value-changed="${evt => console.log(evt.detail)}"
+    @next="${ evt => this.renderRoot.querySelector('#t2').focus() }"></mif-time>
+  <mif-time id="t2" label="时间" lang="en" format="Y/m/d H:i" @value-changed="${evt => console.log(evt.detail)}"
+    @next="${ evt => this.renderRoot.querySelector('#t3').focus() }"></mif-time>
+  <mif-time id="t3" required label="时间范围"
+    range
+    format="Y/m/d H:i"
+    value="2016/10/23 23:58~2018/10/23 21:33"
+    min="2018/08/08"
+    max="2018/11/11"
+    @value-changed="${evt => console.log(evt.detail)}"
+    @next="${ evt => this.renderRoot.querySelector('#t0').focus() }"></mif-time>`;
+  }
+}
+customElements.define("mif-demo", MifDemo);
+</script>
+  </body>
+</html>

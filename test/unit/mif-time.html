@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>mif-time</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
+    <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
+
+    <!-- Import the element to test -->
+    <script type="module" src="../../src/components/mif-time.js"></script>
+  </head>
+  <body>
+    <test-fixture id="dateOnly">
+      <template>
+<mif-time label="Birthdate" value="2018/11/01"></mif-time>
+      </template>
+    </test-fixture>
+
+
+    <test-fixture id="dateAndTime">
+      <template>
+<mif-time label="Moment" format="Y/m/d H:i"></mif-time>
+      </template>
+    </test-fixture>
+
+    <test-fixture id="dateAndTimeEN">
+      <template>
+<mif-time label="Moment" format="Y/m/d H:i" lang="en"></mif-time>
+      </template>
+    </test-fixture>
+
+
+    <test-fixture id="dateRange">
+      <template>
+<mif-time range label="Avariable Dates"></mif-time>
+      </template>
+    </test-fixture>
+
+    <test-fixture id="datetimeRange">
+      <template>
+<mif-time range label="Working Time" format="Y/m/d H:i"></mif-time>
+      </template>
+    </test-fixture>
+
+
+    <script type="module">
+      import 'axe-core/axe.min.js';
+      import {axeReport} from 'pwa-helpers/axe-report.js';
+
+      import '@polymer/iron-test-helpers/mock-interactions.js';
+      import {dom} from '@polymer/polymer/lib/legacy/polymer.dom.js';
+
+      suite('date only tests', function() {
+        let el;
+        setup(function() {
+          el = fixture('dateOnly');
+          // Make tests wait until element is rendered.
+          return el.updateComplete;
+        });
+
+        test('value, invalid status and enter f/x', function() {
+          assert.equal(el.value, '2018/11/01');
+
+          const elroot = el.shadowRoot;
+
+          (async () => {
+            await new Promise((resolve, reject) => {
+              el.value = '2018/18/18';
+              flush(() => {
+                assert.isTrue(el.invalid);
+                resolve();
+              });
+            });
+
+            await new Promise((resolve, reject) => {
+              const inp = elroot.querySelector('paper-input');
+              assert.ok(inp);
+              inp.value = '20181101';
+              el.addEventListener('value-changed', (evt) => {
+                assert.equal(evt.detail, '2018/11/01');
+                assert.equal(evt.detail, el.value);
+                resolve();
+              });
+              MockInteractions.pressEnter(inp);
+            });
+          })();
+        });
+
+        test('dialog, values and buttons', function(done) {
+          el.value = '2018/08/31';
+          const elroot = el.shadowRoot;
+          const dateico = elroot.querySelector('paper-input').querySelector('[slot="suffix"]');
+          assert.ok(dateico);
+          MockInteractions.tap(dateico);
+
+          const d = elroot.querySelector('paper-dialog');
+          assert.isTrue(d.opened);
+          const buttons =  d.querySelectorAll('div.values paper-button');
+          assert.lengthOf(buttons, 3);
+          // const butt = d.querySelector('paper-button[dialog-confirm]');
+          // assert.ok(butt);
+          // assert.isFalse(butt.disabled);
+          flush(() => {
+            assert.equal(buttons[0].innerText, '2018');
+            assert.equal(buttons[1].innerText, '08');
+            assert.equal(buttons[2].innerText, '31');
+
+            assert.isTrue(buttons[2].classList.contains('actived'))
+
+            const butt = d.querySelector('table.date paper-button.valued');
+            assert.ok(butt);
+            assert.equal(butt.innerText, '31');
+            const td = butt.parentNode;
+            assert.equal(td.tagName, 'TD');
+            const row = td.parentNode;
+            assert.equal(row.tagName, 'TR');
+            assert.equal(row.querySelectorAll('td').indexOf(td), 5); // FRIDAY
+            done();
+          });
+        });
+
+        test('confirm value', function(done){
+          confirmVal(el, done);
+        });
+
+        test('popup and close', function(done){
+          const d = el.shadowRoot.querySelector('paper-dialog');
+          assert.ok(d);
+          assert.isFalse(d.opened);
+          (async ()=>{
+            await new Promise((resolve) => {
+              el._popup();
+              flush(() => {
+                assert.isTrue(d.opened);
+                resolve();
+              });
+            });
+
+            const butt = el.shadowRoot.querySelector('paper-button[dialog-dismiss]');
+            assert.ok(butt);
+            MockInteractions.tap(butt);
+            flush(() => {
+              assert.isFalse(d.opened);
+              done();
+            });
+          })();
+        });
+      });
+
+      suite('lang - chinese tests', function() {
+        let el;
+        setup(function() {
+          el = fixture('dateAndTime');
+          // Make tests wait until element is rendered.
+          return el.updateComplete;
+        });
+
+        test('tab and chinese', function(done) {
+          langAndTab(el, {Sunday: '周日', August: '8 月', Hours: '12 时', Minutes: '34 分'}, done);
+        });
+
+        test('nav: prev/next month, restore', function(done){
+          el.value = '2018/09/09';
+          const d = el.shadowRoot.querySelector('paper-dialog');
+          assert.ok(d);
+          el._popup();
+
+          const butts = d.querySelectorAll('#nav paper-icon-button');
+          assert.lengthOf(butts, 3);
+          assert.isFalse(butts[0].disabled);
+          assert.isFalse(butts[1].disabled);
+          assert.isFalse(butts[2].disabled);
+
+          const buttYmd = d.querySelectorAll('div.values paper-button');
+          assert.lengthOf(buttYmd, 4);
+          const butt = buttYmd[1]; // month
+          assert.ok(butt, 'month tab button');
+
+          (async ()=>{
+            await new Promise((resolve) => {
+              flush(() => {
+                assert.equal(butt.innerText, '09');
+                resolve();
+              });
+            });
+
+            await new Promise((resolve) => {
+              MockInteractions.tap(butts[0]);
+              flush(() => {
+                assert.equal(butt.innerText, '08');
+                resolve();
+              });
+            });
+
+            await new Promise((resolve) => {
+              MockInteractions.tap(butts[2]);
+              flush(() => {
+                assert.equal(butt.innerText, '09');
+                resolve();
+              });
+            });
+
+            await new Promise((resolve) => {
+              MockInteractions.tap(butts[1]); // today
+              flush(() => {
+                const dt = el._format(new Date());
+                const v = dt.date.split('/');
+                assert.equal(buttYmd[0].innerText, v[0]);
+                assert.equal(buttYmd[1].innerText, v[1]);
+                assert.equal(buttYmd[2].innerText, v[2]);
+
+                assert.equal(buttYmd[3].innerText, dt.time);
+                done();
+              });
+            });
+
+          })(); // async
+        });
+
+        test('min and max', function(done){
+          el.min = '2017/01/02 01:02';
+          el.max = '2017/09/19 03:04';
+          el.value = '2018/08/31 01:02';
+          el.tab = 'DATE';
+          const d = el.shadowRoot.querySelector('paper-dialog');
+          assert.ok(d);
+          el._popup();
+
+          const butt = d.querySelector('div.todor paper-button[dialog-confirm]');
+          assert.ok(butt);
+
+          (async ()=>{
+            await new Promise((resolve) => {
+              flush(() => {
+                assert.isTrue(butt.disabled);
+                resolve();
+              });
+            });
+
+            await new Promise((resolve) => {
+              el.value = '2017/08/31 01:02';
+              el._popup();
+              flush(() => {
+                assert.isFalse(butt.disabled);
+                assert.lengthOf(d.querySelectorAll('table.date paper-button[disabled]'), 0);
+                resolve();
+              });
+            });
+
+            assert.equal(el.tab, 'DATE');
+
+            await new Promise((resolve) => {
+              el.value = '2017/01/02 01:02';
+              el._popup();
+              flush(() => {
+                assert.lengthOf(d.querySelectorAll('table.date paper-button[disabled]'), 8);
+                assert.isFalse(butt.disabled);
+                resolve();
+              });
+            });
+
+            await new Promise((resolve) => {
+              el.value = '2017/09/19 01:02';
+              el._popup();
+              flush(() => {
+                assert.lengthOf(d.querySelectorAll('table.date paper-button[disabled]'), 18);
+                assert.isFalse(butt.disabled);
+                done();
+              });
+            });
+          })(); // async
+        });
+      });
+
+      suite('lang - english tests', function() {
+        let el;
+        setup(function() {
+          el = fixture('dateAndTimeEN');
+          // Make tests wait until element is rendered.
+          return el.updateComplete;
+        });
+
+        test('tab and english', function(done) {
+          langAndTab(el, {Sunday: 'SUN.', August: 'AUG.', Hours: '12 Hours', Minutes: '34 Minutes'}, done);
+        });
+
+        test('confirm value', function(done){
+          confirmVal(el, done, '04:05');
+        });
+      });
+
+      suite('date range tests', function() {
+        let el;
+        setup(function() {
+          el = fixture('dateRange');
+          // Make tests wait until element is rendered.
+          return el.updateComplete;
+        });
+
+        test('confirm start date', function(done){
+          confirmVal(el, done, '', 0);
+        });
+
+        test('confirm stop date', function(done){
+          confirmVal(el, done, '', 1);
+        });
+      });
+
+      suite('datetime range tests', function() {
+        let el;
+        setup(function() {
+          el = fixture('datetimeRange');
+          // Make tests wait until element is rendered.
+          return el.updateComplete;
+        });
+
+        test('confirm start date', function(done){
+          confirmVal(el, done, '04:05', 0);
+        });
+
+        test('confirm stop date', function(done){
+          confirmVal(el, done, '06:07', 1);
+        });
+
+        test('a11y', function() {
+          return axeReport(el);
+        });
+      });
+
+
+      // langAndTab to test lang switching and tab switching
+      async function langAndTab(el, texts, done) {
+          el.value = '2018/08/31 12:34';
+          el.tab = 'DATE';
+          const elroot = el.shadowRoot;
+          el._popup();
+          const d = elroot.querySelector('paper-dialog');
+          assert.ok(d);
+
+          const th = d.querySelector('table.date th');
+          assert.ok(th);
+          assert.isTrue(th.innerText.indexOf(texts.Sunday)===0);
+
+          const buttons =  d.querySelectorAll('div.values paper-button');
+          assert.lengthOf(buttons, 4);
+
+          await new Promise((resolve,reject) => {
+            el.tab = 'MONTH';
+            flush(() => {
+              assert.equal(el.tab, 'MONTH');
+              assert.isTrue(buttons[1].classList.contains('actived'));
+
+              const butt = d.querySelector('table.month paper-button.valued');
+              assert.ok(butt);
+              assert.equal(butt.innerText, texts.August);
+              resolve();
+            });
+          });
+
+          await new Promise((resolve,reject) => {
+            el.tab = 'YEAR';
+            flush(() => {
+              assert.equal(el.tab, 'YEAR');
+              assert.isTrue(buttons[0].classList.contains('actived'));
+
+              const butt = d.querySelector('table.year paper-button.valued');
+              assert.ok(butt);
+              assert.equal(butt.innerText, '2018');
+              resolve();
+            });
+          });
+
+          await new Promise((resolve,reject) => {
+            el.tab = 'TIME';
+            flush(() => {
+              assert.equal(el.tab, 'TIME');
+              assert.isTrue(buttons[3].classList.contains('actived'));
+
+              const tbl = d.querySelector('table.time');
+              assert.ok(tbl);
+
+              const hours = tbl.querySelector('label.hours');
+              assert.ok(hours)
+              assert.equal(hours.innerText, texts.Hours);
+
+              const minutes = tbl.querySelector('label.minutes');
+              assert.ok(minutes)
+              assert.equal(minutes.innerText, texts.Minutes);
+              done();
+            });
+          });
+      }
+
+      // confirm value testing
+      async function confirmVal(el, done, hi, rangeIdx) {
+        const nv = {y: 2019, m: 7, d: 11, h: 18, i:36};
+        await new Promise((resolve) => {
+          el.tab = 'DATE';
+          el.value = '2018/08/31' +(hi ? ' ' +hi: '') +(el.range ? '~2020/09/01' +(hi ? ' ' +hi: ''):'');
+          el._popup();
+          flush(() => {
+            assert.equal(el.tab, 'DATE');
+            resolve();
+          });
+        });
+        let buttIdx = {d:13, m:6, y:14};
+
+        const dlg = el.shadowRoot.querySelector('paper-dialog');
+        assert.ok(dlg);
+
+        if(rangeIdx == 1) {
+          buttIdx = {d:12, m:6, y:9}; // adjust day and year button position
+          assert.equal(el.range, true);
+          await new Promise((resolve) => {
+            const butt = dlg.querySelectorAll('div.range paper-button')[1];
+            assert.ok(butt);
+            MockInteractions.tap(butt);
+            flush(() => {
+              resolve();
+            });
+          });
+        }
+
+        if(el.range) {
+          if(!rangeIdx) rangeIdx = 0;
+          const butts = dlg.querySelectorAll('div.todor div.range paper-button');
+          assert.lengthOf(butts, 2);
+          assert.isTrue(butts[rangeIdx].disabled, 'button ' +rangeIdx);
+          assert.isFalse(butts[1-rangeIdx].disabled, 'button ' +(1-rangeIdx));
+
+          const v = el.value.split('~');
+          assert.equal(butts[rangeIdx].innerText, v[rangeIdx]);
+          assert.equal(butts[1-rangeIdx].innerText, hi ? v[1-rangeIdx].substr(5) : v[1-rangeIdx]);
+        } else {
+          const butt = dlg.querySelector('div.todor div.single');
+          assert.ok(butt);
+        }
+
+        await new Promise((resolve) => {
+          const butt = dlg.querySelectorAll('table.date paper-button')[buttIdx.d];
+          assert.ok(butt);
+          MockInteractions.tap(butt);
+          flush(() => {
+            resolve();
+          });
+        });
+
+        await new Promise((resolve) => {
+            el.tab = 'MONTH';
+            flush(() => {
+              assert.equal(el.tab, 'MONTH');
+              resolve();
+            });
+        });
+
+        await new Promise((resolve) => {
+          const butt = dlg.querySelectorAll('table.month paper-button')[buttIdx.m];
+          assert.ok(butt);
+          MockInteractions.tap(butt);
+          flush(() => {
+            assert.equal(el.tab, 'DATE');
+            resolve();
+          });
+        });
+
+        await new Promise((resolve) => {
+          el.tab = 'YEAR';
+          flush(() => {
+            assert.equal(el.tab, 'YEAR');
+            resolve();
+          });
+        });
+
+        await new Promise((resolve) => {
+          const butt = dlg.querySelectorAll('table.year paper-button')[buttIdx.y];
+          assert.ok(butt);
+          MockInteractions.tap(butt);
+          flush(() => {
+            assert.equal(el.tab, 'MONTH');
+            resolve();
+          });            
+        });
+
+
+        let expected = [nv.y, '0' +nv.m, nv.d].join('/');
+        if(hi && hi.indexOf(':') > 0) { // with time
+          expected += ' ' +nv.h +':' +nv.i;
+
+          await new Promise((resolve) => {
+            el.tab = 'TIME';
+            flush(() => {
+              const slarr = dlg.querySelectorAll('table.time paper-slider');
+              assert.lengthOf(slarr, 2);
+              slarr[0].value = nv.h;
+              slarr[1].value = nv.i;
+              resolve();
+            });
+          });
+        }
+
+        await new Promise((resolve) => {
+          const butt = dlg.querySelector('paper-button[dialog-confirm]');
+          assert.ok(butt);
+          assert.isFalse(butt.disabled, 'confirm disabled');
+          MockInteractions.tap(butt);
+          flush(() => {
+            assert.isFalse(dlg.opened);
+            let v = el.value;
+            if(el.range) {
+              const i = v.indexOf('~');
+              assert.isTrue(i > 0);
+              if(rangeIdx == 1) {
+                v = v.substr(i+1);
+              } else {
+                v = v.substr(0, i);
+              }
+            }
+            assert.equal(v, expected);
+            done();
+          });
+        });
+      }
+
+    </script>
+  </body>
+</html>

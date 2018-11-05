@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+  <title>mif-table demo</title>
+
+  <script src="../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+
+  <script type="module">
+    import '@polymer/iron-demo-helpers/demo-pages-shared-styles';
+    import '@polymer/iron-demo-helpers/demo-snippet';
+    import '@polymer/paper-icon-button/paper-icon-button.js';
+    import '@polymer/iron-icons/iron-icons.js';
+  </script>
+
+  <custom-style>
+    <style is="custom-style" include="demo-pages-shared-styles">
+    </style>
+  </custom-style>
+  </head>
+  <body>
+  <div class="vertical-section-container centered">
+    <h3><paper-icon-button icon="arrow-back" onclick="location.href='/demo/'" title="Demos home"></paper-icon-button> mif-table demo</h3>
+    <demo-snippet>
+    <template>
+      <mif-demo></mif-demo>
+      <!--
+    html`<mif-table .fields="${ this.fields }"
+        .data="${this.data}"
+        .features="${ this.features }"
+        page-num="1"
+        num-per-page="8"
+        total="199"
+        paging-hide="top"
+        @page-num-changed="${
+          e => {
+          const pageNum = e.detail;
+          }
+        }></mif-table>`
+      -->
+    </template>
+    </demo-snippet>
+  </div>
+
+<script type="module">
+import { LitElement, html } from '../node_modules/@polymer/lit-element';
+import '../src/components/mif-table.js';
+
+class MifDemo extends LitElement {
+  static get properties() {
+    return {
+      fields: {type: Array},
+      data: {type: Array},
+      features: {type: Object}
+    }
+  }
+
+  constructor() {
+    super();
+    this.fields = [
+      {key: "A", name: "AAA", desc:'哈哈', more: 5, style:(row)=>{
+        return parseInt(row.A)%2?'color:green':''
+      }, tapHide: true, expand: (field, row, index)=>{
+        return html`<div align="center"><i>Hello World!</i><div class="value">${row.A}</div><img src="/images/manifest/icon-512x512.png"></div>`;
+      }},
+      {key: "B", name: "BBB", order: "B desc", display:(field,row)=> html`<b>${row.B}/${row.A}</b>`},
+      {name:'Hello', icon:'launch', do: 'something', inline: true, multi: true, display: '盒哟', css: (field,row)=>{return row.B%2?'color:#EF6C00':'color:#455A64'}}
+    ];
+
+    this.data = [{A:1, B:1}, {A:2, B:2}, {A:3, B:3}, {A:'3332342\n34 asdfas 2  34', B:'x'}];
+
+    this.features = {"modify":{},
+      "hello":{name:'NOTHING', icon:'add-circle', inline: (field,row)=>field.name + ':: something --->> ' + [row.A, row.B] },
+      "delete":{}}
+  }
+
+  render() {
+    return html`
+    <mif-table topic="Mif演示"
+      .fields="${ this.fields }" lang="en"></mif-table>
+    <mif-table topic="Mif演示"
+      .fields="${ this.fields }"
+      .data="${this.data}"
+      .features="${ this.features }"
+      .inline="${
+        (field, row, index) => {
+        // return {detail: 'hello world'};
+        return {detail: html`${field.name +'::' +row.A}`, type: index%2?'failed':'success'}
+        }
+       }"
+      @world="${(e)=>{
+        const {row, target, index} = e.detail;
+        console.log(row, target, index);
+      }}"
+      @delete=${
+        (e)=> {
+        const {row, target, index} = e.detail;
+        let d = this.data.slice(0);
+        d.splice(index, 1);
+        this.data = d;
+        }
+      }
+
+      @hello=${ (e) => {
+        console.log(e.detail);
+        }
+      }
+
+      @modify=${
+        (e)=> {
+        const {row, target, index} = e.detail;
+        console.log(row, index);
+        let d = this.data.slice(0);
+        d[+index] = {A: row.A+1, B: row.B+1};
+        this.data = d;
+        }
+      }
+
+      @order-by=${
+        (e) => {console.log(e.detail)}
+      }
+      page-num="1" num-per-page="8" total="199" paging-hide="top"
+      @page-num-changed="${
+      e => {
+        const num = e.detail;
+        this.data = this.data.map(d => {
+        if(typeof d.A == 'string' && d.A.length > 25) {
+          d.A = 'a';
+        }
+        d.A = num +d.A;
+        if(typeof d.B == 'string' && d.B.length > 10) {
+          d.B = 'b';
+        }
+        d.B = d.B + num;
+        return d;
+        });
+      }
+      }">
+    </mif-table>`;
+  }
+}
+customElements.define("mif-demo", MifDemo);
+
+window.addEventListener('debug', (evt)=>{
+  console.log(evt.detail);
+})
+</script>
+  </body>
+</html>

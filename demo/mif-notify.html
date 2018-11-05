@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+  <title>mif-notify demo</title>
+
+  <script src="../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+
+  <script type="module">
+    import '@polymer/iron-demo-helpers/demo-pages-shared-styles';
+    import '@polymer/iron-demo-helpers/demo-snippet';
+    import '@polymer/paper-icon-button/paper-icon-button.js';
+    import '@polymer/iron-icons/iron-icons.js';
+  </script>
+
+  <custom-style>
+    <style is="custom-style" include="demo-pages-shared-styles">
+    </style>
+  </custom-style>
+  </head>
+  <body>
+  <div class="vertical-section-container centered">
+    <h3><paper-icon-button icon="arrow-back" onclick="location.href='/demo/'" title="Demos home"></paper-icon-button> mif-notify demo</h3>
+    <demo-snippet>
+    <template>
+      <mif-notify title="404">资源找不到了</mif-notify>
+      <mif-notify title="404" type="error">资源找不到了</mif-notify>
+      <mif-notify>服务器错误</mif-notify>
+      <mif-notify id="hello" title="Hello Polymer 3" type="info" extra="from https://mindon.github.io/">Mindon Demo</mif-notify>
+      <mif-notify title="Alarm" type="warning">Mindon Demo</mif-notify>
+      <custom-style><style>
+      #hello {
+        --header-style: {
+          font-size: 11pt;
+        };
+      }
+      #extra {
+        --extra-style: {
+          color: blue;
+        };
+        --content-style: {
+          color: orange;
+        };
+      }
+      </style></custom-style>
+      <mif-notify id="extra" extra="report to mindon@gmail.com">服务器错误</mif-notify>
+    </template>
+    </demo-snippet>
+  </div>
+
+<script type="module" src="../src/components/mif-notify.js"></script>
+
+  </body>
+</html>

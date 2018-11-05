@@ -32,16 +32,14 @@ describe('routing tests', function() {
 
   it('the page selector switches pages', async function() {
     await page.goto(`${appUrl}`);
-    await page.waitForSelector('my-app', {visible: true});
+    await page.waitForSelector('mif-polymer', {visible: true});
 
-    await testNavigation(page, 'view2', 'View Two');
-    await testNavigation(page, 'view3', 'View Three');
-    await testNavigation(page, 'view1', 'View One');
+    await testNavigation(page, 'welcome', 'Welcome');
   });
 
   it('the page selector switches pages in a different way', async function() {
     await page.goto(`${appUrl}`);
-    await page.waitForSelector('my-app', {visible: true});
+    await page.waitForSelector('mif-polymer', {visible: true});
 
     // Setup
     await page.evaluate(() => {
@@ -59,9 +57,7 @@ describe('routing tests', function() {
       console.log(window.deepQuerySelector);
     });
 
-    await testNavigationInADifferentWay(page, 'view2', 'View Two');
-    await testNavigationInADifferentWay(page, 'view3', 'View Three');
-    await testNavigationInADifferentWay(page, 'view1', 'View One');
+    await testNavigationInADifferentWay(page, 'welcome', 'Welcome');
   });
 });
 

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>mif-notify</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
+    <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
+
+    <!-- Import the element to test -->
+    <script type="module" src="../../src/components/mif-notify.js"></script>
+
+  </head>
+  <body>
+    <test-fixture id="basic">
+<!--         <custom-style><style>
+          #mytest {
+            --header-style {
+              font-size: 9pt;
+            };
+          }
+        </style></custom-style>
+ -->      <template>
+        <mif-notify id="mytest" title="404" type="error">资源找不到了</mif-notify>
+      </template>
+    </test-fixture>
+
+    <script type="module">
+      import 'axe-core/axe.min.js';
+      import {axeReport} from 'pwa-helpers/axe-report.js';
+
+      import { html } from '@polymer/lit-element';
+
+      const wcShadyDOM = location.search.indexOf('wc-shadydom=true') > -1;
+
+      suite('basic tests', function() {
+        let el;
+        setup(function() {
+          el = fixture('basic');
+          // Make tests wait until element is rendered.
+          return el.updateComplete;
+        });
+
+        // test('style', function() {
+        //   const elroot = el.shadowRoot;
+        //   assert.equal(getComputedStyle(elroot.querySelector('h2')).fontSize, '9pt');
+        // });
+
+        test('type', function(done) {
+          const elroot = el.shadowRoot, section = elroot.querySelector('section');
+          assert.ok(section);
+
+          assert.isTrue(section.classList.contains('error'), 'type is error');
+
+          el.type = 'warning';
+          flush(() => {
+            assert.isTrue(section.classList.contains('warning'), 'type is error');
+            done();
+          });
+        });
+
+
+        test('title', function(done) {
+          const elroot = el.shadowRoot;
+          assert.ok(elroot.querySelector('h2'));
+
+          el.title = '';
+          flush(() => {
+            assert.notOk(elroot.querySelector('h2'));
+            done();
+          });
+        });
+
+        test('content', function() {
+          const elroot = el.shadowRoot;
+          if(wcShadyDOM) {
+            assert.equal(elroot.querySelector('#content').innerText, '资源找不到了');
+          } else {
+            assert.ok(elroot.querySelector('#content slot'));
+          }
+        });
+
+        test('extra', function() {
+          const elroot = el.shadowRoot;
+          const alk = elroot.querySelector('#extra a');
+          assert.ok(alk);
+
+          (async () => {
+            await new Promise((resolve, reject)=>{
+              el.extra = html`<p>mindon</p>`;
+              flush(() => {
+                assert.notOk(elroot.querySelector('#extra a'));
+                assert.ok(elroot.querySelector('#extra p'));
+                resolve();
+              });
+
+            })
+            await new Promise((resolve, reject)=>{
+              el.extra = `testing`;
+              flush(() => {
+                assert.equal(elroot.querySelector('#extra').innerText, 'testing');
+                resolve()
+              });
+            });
+          })();
+        });
+
+        test('a11y', function() {
+          return axeReport(el);
+        });
+      });
+    </script>
+  </body>
+</html>

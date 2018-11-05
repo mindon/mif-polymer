@@ -2,11 +2,17 @@
   "entrypoint": "index.html",
   "shell": "src/components/mif-polymer.js",
   "sources": [
+    "src/**/*",
     "images/**/*"
   ],
   "extraDependencies": [
     "manifest.json",
     "node_modules/@webcomponents/webcomponentsjs/**",
+    "node_modules/@polymer/lit-element/**",
+    "node_modules/@polymer/app-layout/**",
+    "node_modules/@polymer/app-header/**",
+    "node_modules/@polymer/app-drawer/**",
+    "node_modules/pwa-helpers/**",
     "push-manifest.json"
   ],
   "builds": [

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>mif-view</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
+    <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
+
+    <script type="module">
+      import { html } from '../../node_modules/@polymer/lit-element';
+      import {MifView} from '../../src/components/mif-view.js';
+
+      class MifTesting extends MifView {
+        static get properties() {
+          return {}
+        }
+
+        render() {
+          return html`<div id="hello">render view</div>`;
+        }
+      }
+      window.customElements.define('mif-testing', MifTesting);
+    </script>
+
+  </head>
+  <body>
+    <test-fixture id="viewable">
+      <template>
+        <mif-testing></mif-testing>
+      </template>
+    </test-fixture>
+    <test-fixture id="disabled">
+      <template>
+        <mif-testing disabled></mif-testing>
+      </template>
+    </test-fixture>
+
+    <script type="module">
+      import 'axe-core/axe.min.js';
+      import {axeReport} from 'pwa-helpers/axe-report.js';
+
+      suite('mif-view normal tests', function() {
+        let el;
+        setup(function() {
+          el = fixture('viewable');
+          // Make tests wait until element is rendered.
+          return el.updateComplete;
+        });
+
+        test('not disabled', function() {
+          assert.ok(el.shadowRoot.querySelector('div#hello'));
+        });
+
+        test('app({title,powered,navs}) method', function(done) {
+          const info = {title:'Hello', powered:'powerd by mindon.if', navs:[{title:'A', uri:'https://polymer-project.org'}]};
+
+          window.addEventListener('app-customized', (evt) => {
+            const detail = evt.detail;
+            assert.ok(detail);
+            assert.equal(detail.appTitle, info.title);
+            assert.equal(detail.appPowered, info.powered);
+            assert.lengthOf(detail.appNavs, 1);
+            assert.equal(detail.appNavs[0], info.navs[0]);
+            done();
+          });
+          el.app(info);
+        });
+
+        test('metas(info) method', function(done) {
+          const info = {title: 'hello', desc: 'mindon.if'};
+          window.addEventListener('meta-changed', (evt) => {
+            const detail = evt.detail;
+            assert.ok(detail);
+            for(var k in detail) {
+              assert.equal(detail[k], info[k]);
+            }
+            done();
+          });
+
+          el.metas(info);
+        });
+
+      });
+
+      suite('mif-view disabled tests', function() {
+        let el;
+        setup(function() {
+          el = fixture('disabled');
+          // Make tests wait until element is rendered.
+          return el.updateComplete;
+        });
+
+        test('disabled', function() {
+          assert.notOk(el.shadowRoot.querySelector('div#hello'));
+        });
+      });
+
+    </script>
+  </body>
+</html>

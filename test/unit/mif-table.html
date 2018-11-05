@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>mif-table</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
+    <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
+
+    <!-- Import the element to test -->
+    <script type="module" src="../../src/components/mif-table.js"></script>
+  </head>
+  <body>
+    <test-fixture id="basic">
+      <template>
+        <mif-table topic="Mif演示"></mif-table>
+      </template>
+    </test-fixture>
+
+    <script type="module">
+      import 'axe-core/axe.min.js';
+      import {axeReport} from 'pwa-helpers/axe-report.js';
+
+      import '@polymer/iron-test-helpers/mock-interactions.js';
+
+      suite('mif-table tests TODO', function() {
+        let el;
+        setup(function() {
+          el = fixture('basic');
+          // Make tests wait until element is rendered.
+          return el.updateComplete;
+        });
+
+        test('basic', function(done) {
+          let tbl = el.shadowRoot.querySelector('table');
+          assert.notOk(tbl);
+          el.fields = [
+              {'key':'A','name':'A', 'order':'A DESC'},
+              {'key':'B','name':'B'},
+          ];
+
+          (async ()=>{
+            await new Promise((resolve) => {
+              flush(() => {
+                tbl = el.shadowRoot.querySelector('table');
+                assert.ok(tbl);
+                const td = tbl.querySelector('td.empty');
+                assert.ok(td);
+                assert.equal(td.innerText, el._text('EMPTY', el.topic));
+
+                assert.lengthOf(el.fields, 2);
+                assert.lengthOf(tbl.querySelectorAll('th'), el.fields.length);
+                resolve();
+              })
+            });
+
+            await new Promise((resolve) => {
+              el.features = {
+                "modify":{},
+                "hello":{
+                  name:'world',
+                  icon:'add-circle',
+                  inline: (field,row)=>[field.name,row.A].join('='),
+                },
+                "delete":{},
+              };
+              flush(() => {
+                assert.lengthOf(tbl.querySelectorAll('th'), el.fields.length +3);
+                resolve();
+              })
+            });
+
+            await new Promise((resolve) => {
+              let d = [];
+              for(var i=1; i<11; i++) {
+                d.push({A:'a'+i, B:'b' +(10*i +i)});
+              }
+
+              el.data = d;
+
+              flush(() => {
+                tbl = el.shadowRoot.querySelector('table');
+                assert.lengthOf(tbl.querySelectorAll('tr'), d.length +1);
+                
+                const cellAction = tbl.querySelector('tr:nth-child(2) td:nth-child(4) paper-button');
+                // TODO
+                // assert.ok(cellAction);
+                resolve();
+              });
+            });
+
+            // order
+            let orderKey = 'A';
+            await new Promise((resolve) => {
+              const ti = tbl.querySelector('th:nth-child(2) iron-icon');
+              assert.ok(ti);
+              assert.equal(ti.icon, 'expand-more');
+
+              el.addEventListener('order-by', (evt) => {
+                assert.equal(evt.detail, orderKey);
+              });
+
+              MockInteractions.click(ti.parentNode);
+              flush(() => {
+                assert.equal(ti.icon, 'expand-less');
+                resolve();
+              });
+            });
+
+            await new Promise((resolve) => {
+              const ti = tbl.querySelector('th:nth-child(2) iron-icon');
+              assert.ok(ti);
+              orderKey = 'A DESC';
+              MockInteractions.click(ti.parentNode);
+              flush(() => {
+                assert.equal(ti.icon, 'expand-more');
+                done();
+              });
+            });
+
+          })();
+        });
+
+        test('a11y', function() {
+          return axeReport(el);
+        });
+      });
+    </script>
+  </body>
+</html>

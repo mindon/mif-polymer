@@ -55,14 +55,8 @@ describe('👀 page screenshots are correct', function() {
     it('/index.html', async function() {
       return takeAndCompareScreenshot(page, '', 'wide');
     });
-    it('/view1', async function() {
-      return takeAndCompareScreenshot(page, 'view1', 'wide');
-    });
-    it('/view2', async function() {
-      return takeAndCompareScreenshot(page, 'view2', 'wide');
-    });
-    it('/view3', async function() {
-      return takeAndCompareScreenshot(page, 'view3', 'wide');
+    it('/welcome', async function() {
+      return takeAndCompareScreenshot(page, 'welcome', 'wide');
     });
     it('/404', async function() {
       return takeAndCompareScreenshot(page, 'batmanNotAView', 'wide');
@@ -77,14 +71,8 @@ describe('👀 page screenshots are correct', function() {
     it('/index.html', async function() {
       return takeAndCompareScreenshot(page, '', 'narrow');
     });
-    it('/view1', async function() {
-      return takeAndCompareScreenshot(page, 'view1', 'narrow');
-    });
-    it('/view2', async function() {
-      return takeAndCompareScreenshot(page, 'view2', 'narrow');
-    });
-    it('/view3', async function() {
-      return takeAndCompareScreenshot(page, 'view3', 'narrow');
+    it('/welcome', async function() {
+      return takeAndCompareScreenshot(page, 'welcome', 'narrow');
     });
     it('/404', async function() {
       return takeAndCompareScreenshot(page, 'batmanNotAView', 'narrow');

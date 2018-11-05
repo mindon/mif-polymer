@@ -23,18 +23,16 @@ class MifRender extends MifView {
     // content
     let _body = '';
     if(_path == '/welcome') {
-      import("./components/mif-welcome.js");
-      _body = html`<mif-welcome></mif-welcome>`;
+      import("./feature/mif-welcome.js");
+      _body = html`<mif-welcome page-num="8"></mif-welcome>`;
 
     } else {
       _body = html`<center>${_path +' = ' + new Date()}</center>`;
     }
 
     return html`
-      ${SharedStyles}
-      <section>
-      ${_body}
-      </section>`
+${SharedStyles}
+<section>${_body}</section>`
   }
 }
 

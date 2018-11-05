@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>mif-paging</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
+    <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
+
+    <!-- Import the element to test -->
+    <script type="module" src="../../src/components/mif-paging.js"></script>
+  </head>
+  <body>
+    <test-fixture id="basic">
+      <template>
+<mif-paging num="3" num-per-page="8" total="136"></mif-paging>
+      </template>
+    </test-fixture>
+
+    <script type="module">
+      import 'axe-core/axe.min.js';
+      import {axeReport} from 'pwa-helpers/axe-report.js';
+
+      import '@polymer/iron-test-helpers/mock-interactions.js';
+
+      suite('basic tests', function() {
+        let el;
+        setup(function() {
+          el = fixture('basic');
+          // Make tests wait until element is rendered.
+          return el.updateComplete;
+        });
+
+        test('number and lang', function(done) {
+          const elroot = el.shadowRoot;
+          const total = el.total, npp = el.numPerPage, max= Math.ceil(total/npp), pn = el.num;
+          const info = elroot.querySelector('nobr');
+          assert.ok(info);
+          assert.equal(info.innerText, `${total} 项 / ${max} 页`);
+
+          el.lang = 'en';
+          flush(()=>{
+            assert.equal(info.innerText, `${total} items / ${max} pages`);
+            done();
+          });
+        });
+
+        test('current value and input', function(done) {
+          const elroot = el.shadowRoot;
+          const inp = elroot.querySelector('paper-input');
+          assert.ok(inp);
+          assert.equal(inp.value, el.num);
+
+          const expected = 6;
+          el.addEventListener('num-changed', (evt)=>{
+            assert.equal(evt.detail, expected);
+            assert.equal(el.num, expected);
+            done();
+          });
+          inp.value = expected;
+          // assert.ok(inp.$.nativeInput);
+          MockInteractions.pressEnter(inp);
+        });
+
+        test('tap and num-changed event', function(done) {
+          const elroot = el.shadowRoot;
+
+          const buttons = elroot.querySelectorAll('paper-button');
+          
+          const total = el.total, npp = el.numPerPage, max= Math.ceil(total/npp);
+          let num = 1, times = 0, count = 3;
+          el.addEventListener('num-changed', (evt)=>{
+            assert.equal(evt.detail, num);
+            assert.equal(el.num, num);
+            times++;
+            count--;
+            if(count <= 0) {
+              assert.equal(times, 3);
+              done();
+            }
+          });
+          num = 1;
+          MockInteractions.tap(buttons[num-1]); // first page
+
+          (async () => {
+            await new Promise((resolve)=>{
+              flush(() => {
+                num = 5;
+                MockInteractions.tap(buttons[num-1]);  // last page
+                resolve();
+              });
+            });
+            await new Promise((resolve)=>{
+              flush(() => {
+                num = max;
+                MockInteractions.tap(buttons[buttons.length-1]);  // last page
+                resolve();
+              });
+            });
+          })();
+       });
+
+        test('a11y', function() {
+          return axeReport(el);
+        });
+      });
+    </script>
+  </body>
+</html>

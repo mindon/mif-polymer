@@ -21,7 +21,7 @@ class DemoRender extends MifView {
     const _path = this.path;
 
     // import("./components/demo-view1.js");
-   this.metas({title: 'My!' + _path.substr(1), desc: 'Hello, My!'});
+    this.metas({title: 'My!' + _path.substr(1), desc: 'Hello, My!'});
 
     return html`
       ${SharedStyles}
