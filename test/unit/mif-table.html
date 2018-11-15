@@ -23,8 +23,10 @@
       import {axeReport} from 'pwa-helpers/axe-report.js';
 
       import '@polymer/iron-test-helpers/mock-interactions.js';
+      import {Base} from '@polymer/polymer/polymer-legacy.js';
+      // import {afterNextRender} from '@polymer/polymer/lib/utils/render-status.js';
 
-      suite('mif-table tests TODO', function() {
+      suite('mif-table tests', function() {
         let el;
         setup(function() {
           el = fixture('basic');
@@ -52,7 +54,7 @@
                 assert.lengthOf(el.fields, 2);
                 assert.lengthOf(tbl.querySelectorAll('th'), el.fields.length);
                 resolve();
-              })
+              });
             });
 
             await new Promise((resolve) => {
@@ -79,14 +81,12 @@
 
               el.data = d;
 
-              flush(() => {
-                tbl = el.shadowRoot.querySelector('table');
-                assert.lengthOf(tbl.querySelectorAll('tr'), d.length +1);
-                
-                const cellAction = tbl.querySelector('tr:nth-child(2) td:nth-child(4) paper-button');
-                // TODO
-                // assert.ok(cellAction);
-                resolve();
+               flush(() => {
+                  assert.lengthOf(tbl.querySelectorAll('tr'), d.length +1);
+
+                  const cellAction = tbl.querySelector('tr:nth-child(2) td:nth-child(4) paper-button');
+                  assert.ok(cellAction);
+                  resolve();
               });
             });
 
@@ -120,6 +120,18 @@
             });
 
           })();
+        });
+
+        test('header feature - TODO', function() {
+        });
+
+        test('more feature - TODO', function() {
+        });
+
+        test('inline feature - TODO', function() {
+        });
+
+        test('events feature - TODO', function() {
         });
 
         test('a11y', function() {

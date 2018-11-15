@@ -45,9 +45,9 @@ import '../src/components/mif-paging.js';
 
 class MifDemo extends LitElement {
   render() {
-  return html`<mif-paging num="3" num-per-page="8" total="136" @num-changed="${
-    e => console.log(e.detail)
-  }"></mif-paging>`;
+    return html`<mif-paging num="3" num-per-page="8" total="136" @num-changed="${
+      e => console.log(e.detail)
+    }"></mif-paging>`;
   }
 }
 customElements.define("mif-demo", MifDemo);

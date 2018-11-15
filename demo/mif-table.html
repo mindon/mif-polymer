@@ -86,8 +86,8 @@ class MifDemo extends LitElement {
       .features="${ this.features }"
       .inline="${
         (field, row, index) => {
-        // return {detail: 'hello world'};
-        return {detail: html`${field.name +'::' +row.A}`, type: index%2?'failed':'success'}
+          // return {detail: 'hello world'};
+          return {detail: html`${field.name +'::' +row.A}`, type: index%2?'failed':'success'}
         }
        }"
       @world="${(e)=>{
@@ -96,10 +96,10 @@ class MifDemo extends LitElement {
       }}"
       @delete=${
         (e)=> {
-        const {row, target, index} = e.detail;
-        let d = this.data.slice(0);
-        d.splice(index, 1);
-        this.data = d;
+          const {row, target, index} = e.detail;
+          let d = this.data.slice(0);
+          d.splice(index, 1);
+          this.data = d;
         }
       }
 
@@ -110,11 +110,11 @@ class MifDemo extends LitElement {
 
       @modify=${
         (e)=> {
-        const {row, target, index} = e.detail;
-        console.log(row, index);
-        let d = this.data.slice(0);
-        d[+index] = {A: row.A+1, B: row.B+1};
-        this.data = d;
+          const {row, target, index} = e.detail;
+          console.log(row, index);
+          let d = this.data.slice(0);
+          d[+index] = {A: row.A+1, B: row.B+1};
+          this.data = d;
         }
       }
 
@@ -126,15 +126,15 @@ class MifDemo extends LitElement {
       e => {
         const num = e.detail;
         this.data = this.data.map(d => {
-        if(typeof d.A == 'string' && d.A.length > 25) {
-          d.A = 'a';
-        }
-        d.A = num +d.A;
-        if(typeof d.B == 'string' && d.B.length > 10) {
-          d.B = 'b';
-        }
-        d.B = d.B + num;
-        return d;
+          if(typeof d.A == 'string' && d.A.length > 25) {
+            d.A = 'a';
+          }
+          d.A = num +d.A;
+          if(typeof d.B == 'string' && d.B.length > 10) {
+            d.B = 'b';
+          }
+          d.B = d.B + num;
+          return d;
         });
       }
       }">

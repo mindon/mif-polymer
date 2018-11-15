@@ -35,7 +35,8 @@ class MifTable extends LitElement {
 <style>
   :host {
     display: block;
-    margin: 1rem 0;
+    font-size: 1rem;
+    margin: 1em 0;
     width: 100%;
     max-width: 100%;
   }
@@ -57,17 +58,18 @@ class MifTable extends LitElement {
     border-width: thin 0;
     border-style: solid;
     border-color: #f0f0f0;
-    font-size: 0.8rem;
-    padding: 0.2rem 1rem;
+    font-size: 0.8em;
+    padding: 0 1em;
+    line-height: 2.4em;
     @apply --table-th-style;
   }
   td {
     margin: 0;
-    padding: 0.5rem 1rem;
+    padding: 0.5em 1em;
     border-bottom: solid thin #eee;
-    max-width: 36rem;
+    max-width: 36em;
     word-wrap: break-word;
-    font-size: 0.8rem;
+    font-size: 0.8em;
     @apply --table-td-style;
   }
   th iron-icon {
@@ -99,7 +101,7 @@ class MifTable extends LitElement {
   td.inline {
     background-color: #eee;
     padding: 1em;
-    font-size: 1rem;
+    font-size: 1em;
     border-radius: 0 0 6px 6px;
     @apply --detail-inline; 
   }
@@ -156,8 +158,16 @@ class MifTable extends LitElement {
 
     this.__texts =  {
       'EMPTY': {
-        'en': (t)=>`No ${t||''} data`,
-        'zh': (t)=>`暂无${t||''}数据`
+        'en': (t)=>`No matched ${t||''} data`,
+        'zh': (t)=>`暂无相符的${t||''}数据`
+      },
+      'EDIT': {
+        'en': 'Edit',
+        'zh': '修改'
+      },
+      'UNLINK': {
+        'en': 'Delete',
+        'zh': '删除'
       },
       'DELETE': {
         'en': (t)=>`Confirm delete this item of ${t||'data'}`,
@@ -214,7 +224,7 @@ class MifTable extends LitElement {
  class="${field.do?'center':'left'}" 
  style="${field.order?'cursor:default':''}"
  @click="${ evt => { if(field.order) this._orderToggle(field, colIndex-1, evt.target) } }">${ this._header(field, colIndex-1)}
- ${ field.order ? html`<iron-icon icon="${ this._orderDesc(field) ? 'expand-more':'expand-less' }"></iron-icon>` : '' }
+ ${ field.order ? html` <iron-icon icon="${ this._orderDesc(field) ? 'expand-more':'expand-less' }"></iron-icon>` : '' }
 </th>${!prefix?xheaders:''}`;
     })}</tr></thead>`; // header
 
@@ -263,8 +273,8 @@ class MifTable extends LitElement {
   _conff(features, size) {
     // default settings
     const defaults = {
-      modify:{i:0, ico:'create'},
-      delete: {i:-1, ico:'delete', inline: true}
+      modify:{i:0, ico:'create', name:this._text('EDIT')},
+      delete: {i:-1, ico:'delete', name:this._text('UNLINK'), inline: true}
     };
 
     let _iff = {};
@@ -333,6 +343,7 @@ class MifTable extends LitElement {
     ico.icon = descMode ? 'expand-less': 'expand-more';
     var k = field.order.toLowerCase().indexOf(' desc'), ok = k>-1?field.order.substr(0, k): field.order;
     if(this.data && this.data.length > 0) {
+      this._atlines = {};
       this.dispatchEvent(new CustomEvent('order-by', {detail: ok +(descMode?'':' DESC')}));
     }
   }
@@ -342,6 +353,7 @@ class MifTable extends LitElement {
     if(!props['data']) {
       return;
     }
+    this._atlines = {};
     if(this.pageNum > 1 && this.data.length == 0) {
       this.pageNum--;
     }
@@ -380,7 +392,7 @@ class MifTable extends LitElement {
 
   // generate cell content
   _cell(field, row, rowIdx, colIdx) {
-    let v = field.key ? row[field.key] : '';
+    let v = html`${field.key ? row[field.key] : ''}`;
     if(v && field.more && v.length > field.more) {
       v = this._moreButton(field, row, rowIdx, colIdx, v);
     }

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+  <title>mif-module demo</title>
+
+  <script src="../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+
+  <script type="module">
+    import '@polymer/iron-demo-helpers/demo-pages-shared-styles';
+    import '@polymer/iron-demo-helpers/demo-snippet';
+    import '@polymer/paper-icon-button/paper-icon-button.js';
+    import '@polymer/iron-icons/iron-icons.js';
+  </script>
+
+  <custom-style>
+    <style is="custom-style" include="demo-pages-shared-styles">
+    </style>
+  </custom-style>
+  </head>
+  <body>
+  <div class="vertical-section-container centered">
+    <h3><paper-icon-button icon="arrow-back" onclick="location.href='/demo/'" title="Demos home"></paper-icon-button> mif-module demo</h3>
+    <demo-snippet>
+    <template>
+      <mif-demo topic="测试"></mif-demo>
+    </template>
+    </demo-snippet>
+  </div>
+
+<script type="module">
+import { LitElement, html } from '../node_modules/@polymer/lit-element';
+import { MifCell } from  '../src/app-mif/feature/mif-cell.js';
+import '@polymer/paper-input/paper-input.js';
+
+class MifCellDemo extends MifCell {
+  constructor() {
+    super();
+    this.fields = [
+      {key: "Name", name: "名称", order: "name DESc"},
+      {key: "Memo", name: "备注", more: 8, expand: (field, row, index)=>{
+        return html`<div align="center">${row.Memo}</div>`;
+      }},
+    ];
+    this.lang = 'en';
+    this.features = this._via('admin') ? {"modify":{}, "delete":{}} : {};
+    this.ubase = 'http://localhost:8088/hello/demo';
+    // query, save, delete?ID=
+
+    this._query();
+  }
+
+  _detail(info) {
+    if(!this._via('admin')) {
+      return this._view(info);
+    }
+    if(!info) {
+      info = {Name:'', Memo:''}; // default values
+    }
+    return html`<ul>
+      <li><paper-input id="inp_name" label="Name 名称" autofocus required auto-validate value="${info.Name}" @keydown="${this._enter('#inp_memo')}"></paper-input></li>
+      <li><paper-input id="inp_memo" label="Memo 备注" value="${info.Memo}" @keydown="${this._enter}"></paper-input></li>
+    </ul>`
+  }
+
+  _reset() {
+    const fields = ['#inp_name', '#inp_memo'];
+    for(let i=0; i<fields.length; i++) {
+      this.renderRoot.querySelector(fields[i]).value = '';
+    }
+  }
+
+  _verify(root) {
+    let inp = root.querySelector('#inp_name');
+    const name = inp.value;
+    if(!name) {
+      inp.focus();
+      return
+    }
+
+    inp = root.querySelector('#inp_memo');
+    const memo = inp.value;
+    return ['Name=' +encodeURIComponent(name),
+      'Memo=' +encodeURIComponent(memo),
+      'ID=' +(this.current ? this.current.ID : 0)];
+  }
+
+  _view(info) {
+    if(!info) info = {};
+    return html`<ul>
+      <li><label>Name: </label> ${info.Name}</li>
+      <li><label>Memo: </label> ${info.Memo}</li>
+    </ul>`
+  }
+
+  _search() {
+    return html`<paper-input type="search" label="关键字" @keydown="${
+      this._enter((evt)=>{
+        const v = evt.target.value;
+        this._query(v?['name=' +encodeURIComponent(v)]:[]);
+      })
+    }"></paper-input>`;
+  }
+
+  _via(role) {
+    return true;
+  }
+}
+customElements.define("mif-demo", MifCellDemo);
+</script>
+  </body>
+</html>
