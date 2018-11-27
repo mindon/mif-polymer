@@ -13,6 +13,7 @@ class MifTime extends LitElement {
       required: {type: Boolean},
       label: {type: String},
       value: {type: String},
+      icon: {type: String},
       format: {type: String},
       range: {type: Boolean},
       min: {type: String},
@@ -26,7 +27,12 @@ class MifTime extends LitElement {
       _values: {type: Array},
       _bounds: {type: Array},
       _working: {type: Array},
-      _year: {type: Number}
+      _year: {type: Number},
+
+      disabled: {type: Boolean},
+      readOnly: {type: Boolean,attribute:'read-only'},
+
+      autoOff: {type: String, attribute:'auto-off'},
     }
   }
 
@@ -220,7 +226,7 @@ class MifTime extends LitElement {
     dss = dss.replace(/\s*-\s*/, '~').replace(/([\/:]\d{2})\s+(\d{4}\/)/, '$1~$2');
     this.value = dss;
     if(!this.invalid) {
-      this.dispatchEvent(new CustomEvent('next', {detail: this.value, target: this}));
+      this.dispatchEvent(new CustomEvent('next-focus', {detail: this.value, target: this}));
     }
   }
 
@@ -229,7 +235,7 @@ class MifTime extends LitElement {
     if(v != this.value) {
       this.value = v;
     }
-    if(rxp.test(v)) {
+    if(v==''||rxp.test(v)) {
       this.dispatchEvent(new CustomEvent('value-changed', {detail: v.replace(/^\s+|\s+$/g, '')}));
     }
   }
@@ -302,6 +308,11 @@ class MifTime extends LitElement {
       t.setMonth(d.m -1);
       t.setDate(d.d);
       this._set(t);
+      if(this.autoOff=='DATE') {
+        this._confirm()
+        const mypop = this.renderRoot.querySelector('#mypop');
+        mypop.close();
+      }
   }
 
   _setHours(h) {
@@ -316,6 +327,11 @@ class MifTime extends LitElement {
     let t =!v?new Date():new Date(v);
     t.setMinutes(i);
     this._set(t);
+    if(this.autoOff=='MINUTES') {
+      this._confirm()
+      const mypop = this.renderRoot.querySelector('#mypop');
+      mypop.close();
+    }
   }
 
   _setSeconds(s) {
@@ -422,13 +438,13 @@ class MifTime extends LitElement {
   }
 
   render() {
-    let {alwaysFloatLabel, label,
-      value, format,
+    let {alwaysFloatLabel, label, icon,
+      value, format, disabled, readOnly,
       range, min, max, workingTime,
       tab, _index} = this;
 
     // defaults
-    if(alwaysFloatLabel) alwaysFloatLabel = false;
+    if(!alwaysFloatLabel) alwaysFloatLabel = false;
     if(!label) label = "";
     if(format === undefined) format = 'Y/m/d';
     if(range === undefined) range = false;
@@ -660,19 +676,28 @@ class MifTime extends LitElement {
       padding: 0 10px;
     }
   }
+  div.icon {
+    display:flex;
+    align-items:var(--icon-align-items, flex-end);
+    height:100%;
+  }
 </style>
 <paper-input type="search"
-  ?always-float-label="${alwaysFloatLabel}"
+  ?always-float-label=${alwaysFloatLabel}
   label="${label}"
   value="${this.value||''}"
-  @value-changed="${evt => this._inputChanged(evt)}"
-  auto-focus ?auto-validate="${!_confirmDisabled}"
-  ?required="${this.required}"
-  ?invalid="${_confirmDisabled}"
+  @value-changed=${evt => this._inputChanged(evt)}
+  auto-focus
+  ?disabled=${disabled}
+  ?readOnly=${readOnly}
+  ?auto-validate=${!_confirmDisabled}
+  ?required=${this.required}
+  ?invalid=${_confirmDisabled}
   pattern="${this.__pattern.toString().replace(/^\/|\/$/g,'')}"
-  @invalid-changed="${evt => this.invalid = evt.detail.value}"
-  @keydown="${evt => this._keyPressed(evt)}">
-  <iron-icon slot="suffix" icon="date-range" @tap="${evt => this._popup(evt)}""></iron-icon>
+  @invalid-changed=${evt => this.invalid = evt.detail.value}
+  @keydown=${evt => this._keyPressed(evt)}>
+  ${icon?html`<paper-icon-button slot="prefix" icon="${icon}"></paper-icon-button>`:''}
+  <paper-icon-button slot="suffix" icon="date-range" @tap=${evt => this._popup(evt)}></paper-icon-button>
 </paper-input>
 <paper-dialog id="mypop" horizontal-align="center" vertical-align="auto">
   <div class="panel">
@@ -710,7 +735,7 @@ ${!timed?'': html`<paper-button ?raised="${tab!='TIME'}" class="${tab!='TIME'?''
   }
 
   _popup(evt) {
-    let mypop = this.renderRoot.querySelector('#mypop');
+    const mypop = this.renderRoot.querySelector('#mypop');
     this._values = undefined; // reset
     this.tab = 'DATE';
     mypop.open();
