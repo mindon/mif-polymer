@@ -61,8 +61,11 @@ class MifPolymer extends LitElement {
     background-color: var(--app-header-background-color);
     color: var(--app-header-text-color);
     border-bottom: 1px solid #eee;
+    z-index: 1;
   }
-
+  app-drawer {
+    z-index: 2;
+  }
   .toolbar-top {
     background-color: var(--app-header-background-color);
   }

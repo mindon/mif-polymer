@@ -18,12 +18,14 @@ class MifOption extends LitElement {
       label: {type: String},
       icon: {type: String},
       disabled: {type: Boolean},
+      autofocus: {type: Boolean},
       readOnly: {type: Boolean, attribute:'read-only'},
       _viewable: {type: Boolean},
       noArrows: {type: Boolean, attribute:'no-arrows'},
       date: {type: Object},
       off: {type: Function},
       view: {type: Function},
+      query: {type: Function},
       removable: {type: Boolean},
     }
   }
@@ -55,7 +57,7 @@ class MifOption extends LitElement {
   }
 
   render() {
-    let { label, icon,
+    let { label, icon, autofocus,
       data, index, required, pattern,
       disabled, off, noArrows, removable,
       readOnly, _viewable, view } = this;
@@ -152,19 +154,19 @@ html`<mif-time
 html`<paper-input
   tab-index="0"
   label="${label}"
-  ?disabled="${disabled}"
+  ?disabled="${disabled||false}"
   always-float-label
-  auto-validate
-  ?required=${required}
-  pattern="${pattern}"
+  ?autofocus="${autofocus||false}"
+  ?required="${required||false}"
+  pattern="${pattern||''}"
   value="${view?view(current):current.desc||current.value||''}"
-  ?readOnly="${readOnly}"
+  ?readOnly="${readOnly||false}"
   @blur=${ _ => this._tid = setTimeout(_ => this._viewable && (this._viewable=false), 120) }
   @value-changed=${
     evt => this.invalid = evt.target.invalid
   }
   @tap=${_=>readOnly&&this.toggle()}
-  @keydown=${evt => this._keyPressed(evt)}>
+  @keydown=${evt => this._keyPressed(evt, offCtl)}>
   <paper-icon-button slot="prefix" icon="${icon||'fingerprint'}"></paper-icon-button>
   <slot slot="suffix" name="list">
     <paper-icon-button
@@ -188,21 +190,34 @@ html`<paper-input
 }</paper-listbox></div>`
   }
 
-  _keyPressed(evt) {
-    if(evt.keyCode != 13) {
+  _keyPressed(evt, offCtl) {
+    const kc = evt.keyCode
+    if(kc == 38 || (kc==37 && this.readOnly)) {// up arrow
+      if(offCtl && !offCtl('prev')) {
+        this.prev()
+        return
+      }
+    } else if(kc == 40 || (kc==39 && this.readOnly)) {
+      if(offCtl && !offCtl('next')) {
+        this.next()
+        return
+      }
+    }
+    if(kc != 13) {
       return;
     }
     const v = evt.target.value;
-    const cb = (d)=>{
-      const data = this.data || [];
-      let idx = -1;
+    const indexOf = (d, data)=>{
       for(let i=0; i<data.length; i++) {
-        const v = data[i];
-        if(v.value==d.value) {
-          idx = i;
-          break;
+        if(data[i].value==d.value) {
+          return i;
         }
       }
+      return -1;
+    }
+    const cb = (d)=>{
+      const data = this.data || [];
+      let idx = indexOf(d, data);
       if(idx > -1) {
         data[idx] = d;
       } else {
@@ -216,7 +231,13 @@ html`<paper-input
     if(!this.query) {
       cb({value:v});
     } else {
-      this.query(v, cb);
+      const idx = indexOf({value:v}, this.data||[]);
+      // avoid duplicated query
+      if(idx < 0 || data[idx].desc == undefined) {
+        this.query(v, cb);
+      } else {
+        this.index = idx;
+      }
     }
     if(!this.invalid) {
       this.dispatchEvent(new CustomEvent('next-focus', {detail: this.value, target: this}));

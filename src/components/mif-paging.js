@@ -9,7 +9,8 @@ class MifPaging extends LitElement {
       num: { type: Number, attribute: true},
       numPerPage: { type: Number, attribute: 'num-per-page' },
       total: { type: Number, attribute: true},
-      readOnly: { type: Boolean, attribute: 'read-only'}
+      readOnly: { type: Boolean, attribute: 'read-only'},
+      slim: {type: Number},
     }
   }
 
@@ -62,7 +63,7 @@ class MifPaging extends LitElement {
   }
 
   render() {
-    const { numPerPage, total, readOnly } = this;
+    const { numPerPage, total, readOnly, slim } = this;
 
     let num = this.num;
     const max = numPerPage > 0 ? Math.ceil(total/numPerPage) : 0;
@@ -71,7 +72,7 @@ class MifPaging extends LitElement {
     if(isNaN(num) || num < 1) num = 1;
     else if(num > max) num = max;
 
-    let n = 3, from = num -n , to = num +n;
+    let n = slim || 3, from = num -n , to = num +n;
 
     if(from < 1) to = Math.max(2*n +1, to);
     else if (to > max) from = Math.min(max - 2*n, to);
@@ -98,7 +99,7 @@ class MifPaging extends LitElement {
 
     return html`
 <style is="custom-style">
-  :host {display:block;}
+  :host {display:block; margin: 1px 0}
   paper-input {
     --paper-input-container-input-color: #06e;
     --paper-input-container-input-webkit-spinner: {

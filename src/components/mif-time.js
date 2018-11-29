@@ -696,8 +696,8 @@ class MifTime extends LitElement {
   pattern="${this.__pattern.toString().replace(/^\/|\/$/g,'')}"
   @invalid-changed=${evt => this.invalid = evt.detail.value}
   @keydown=${evt => this._keyPressed(evt)}>
-  ${icon?html`<paper-icon-button slot="prefix" icon="${icon}"></paper-icon-button>`:''}
-  <paper-icon-button slot="suffix" icon="date-range" @tap=${evt => this._popup(evt)}></paper-icon-button>
+  ${icon?html`<paper-icon-button title="${label}" slot="prefix" icon="${icon}"></paper-icon-button>`:''}
+  <paper-icon-button title="…" slot="suffix" icon="date-range" @tap=${evt => this._popup(evt)}></paper-icon-button>
 </paper-input>
 <paper-dialog id="mypop" horizontal-align="center" vertical-align="auto">
   <div class="panel">

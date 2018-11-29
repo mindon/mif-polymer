@@ -38,7 +38,7 @@ paper-button[active] {
     value="2018/10/05~2018/10/27"
     min="2018/08/08"
     max="2019/09/09"
-    @next="${ evt => this.renderRoot.querySelector('#other').focus() }"
+    @next-focus="${ evt => this.renderRoot.querySelector('#other').focus() }"
     @value-changed="${evt => console.log(evt.detail)}"></mif-time>
 
   <paper-input id="other" label="INPUT Label" type="search"></paper-input>

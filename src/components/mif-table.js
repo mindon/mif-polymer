@@ -26,6 +26,8 @@ class MifTable extends LitElement {
       pagingHide: {type: String, attribute: 'paging-hide'},
 
       _atlines: {type: Object}, // {row index: do-name}
+      slim: {type: Number},
+      rowTrigger: {type: Object},
     }
   }
 
@@ -39,6 +41,7 @@ class MifTable extends LitElement {
     margin: 1em 0;
     width: 100%;
     max-width: 100%;
+    z-index: 0;
   }
   table {
     border-spacing: 0;
@@ -153,6 +156,9 @@ class MifTable extends LitElement {
   div.confirm div.success {
     color: var(--paper-green-700);
   }
+  div.paging {
+    text-align: var(--paging-text-align, center);
+  }
 </style>
 <custom-style>`;
 
@@ -204,7 +210,7 @@ class MifTable extends LitElement {
   }
 
   render() {
-    const {topic, fields, data,
+    const {topic, fields, data, slim,
       features, _atlines, emptyMessage,
       pageNum, numPerPage, total, pagingHide} = this;
 
@@ -222,7 +228,7 @@ class MifTable extends LitElement {
       // header item
       return html`${prefix?xheaders:''}<th
  class="${field.do?'center':'left'}" 
- style="${field.order?'cursor:default':''}"
+ style="${(field.order?'cursor:default':'')+(field.style?';'+field.style:'')}"
  @click="${ evt => { if(field.order) this._orderToggle(field, colIndex-1, evt.target) } }">${ this._header(field, colIndex-1)}
  ${ field.order ? html` <iron-icon icon="${ this._orderDesc(field) ? 'expand-more':'expand-less' }"></iron-icon>` : '' }
 </th>${!prefix?xheaders:''}`;
@@ -236,7 +242,20 @@ class MifTable extends LitElement {
         rowIndex++;
         colIndex = 0;
         // body row
-        return html`<tr class="${rowIndex%2==0?'row-1':'row-0'}" style="${ this._styleRow(row, rowIndex-1) }">${
+        return html`<tr
+          class="${ rowIndex%2==0?'row-1':'row-0' }"
+          style="${ this._styleRow(row, rowIndex-1) }"
+          @click="${ ((d, idx)=>{return e => {
+            const qn = this.rowTrigger, target = e.target;
+            if(qn) {
+              const tr = this._parentOf(target, 'TR');
+              if(!tr) return;
+              const t = tr.querySelector(qn.q);
+              if(!t || t==target) return;
+              if(qn.ignore && qn.ignore(fields[qn.n], d, t, idx)) return;
+              this.fire(fields[qn.n], d, t, idx);
+            }
+          }})(row, rowIndex -1) }">${
           fields.map(field => {
             colIndex++;
 
@@ -253,17 +272,32 @@ class MifTable extends LitElement {
     // paging view
     let npp = numPerPage;
     if(!npp) npp = 8;
-    const paging = total && total > numPerPage ? html`<mif-paging
+    const paging = total && total > numPerPage ? html`<div class="paging"><mif-paging
       lang="${this.lang}"
       total="${total}"
       num-per-page="${npp}"
       num="${pageNum}"
-      @num-changed=${e => this.dispatchEvent(new CustomEvent('page-num-changed', {detail: e.detail}))}></mif-paging>` : '';
+      slim="${slim||3}"
+      @num-changed="${e => {
+        this.pageNum = e.detail;
+        this.dispatchEvent(new CustomEvent('page-num-changed', {detail: e.detail}))
+      }}"></mif-paging></div>` : '';
 
     return html`${this.__styles}
       ${ (!pagingHide || pagingHide!="top" ? paging :'') }
       <table>${ header } ${ body } </table>
       ${ !pagingHide || pagingHide.indexOf("bot") != 0 ? paging :''}`;
+  }
+
+  _parentOf(n, tag) {
+    while(n && n.tagName != tag) {
+      n = n.parentNode;
+      if(n == this.renderRoot) {
+        n = null;
+        break
+      }
+    }
+    return n;
   }
 
   _header(field, colIdx) {
@@ -421,13 +455,21 @@ class MifTable extends LitElement {
     if(field.do) {
       // button view
       let buttonStyle = field.css instanceof Function ? field.css(field, row) : field.css || '';
-      if(!buttonStyle && !raised && field.inline) {
+      if(!raised && field.inline) {
         buttonStyle = 'color: #d50000';
       }
       if(field.ico) {
-        v = html`<paper-icon-button style="${ buttonStyle }" @tap="${e=>this.fire(field, row, e.target, rowIdx)}" ?disabled="${disabled}" icon="${field.ico}">${v}</paper-icon-button>`;
+        v = html`<paper-icon-button
+          style="${ buttonStyle }"
+          @tap="${e=>this.fire(field, row, e.target, rowIdx)}"
+          ?disabled="${disabled}"
+          icon="${field.ico}">${v}</paper-icon-button>`;
       } else {
-        v = html`<paper-button style="${ buttonStyle }" @tap="${e=>this.fire(field, row, e.target, rowIdx)}" ?disabled="${disabled}" ?raised="${raised}">${v}</paper-button>`;
+        v = html`<paper-button
+          style="${ buttonStyle }"
+          @tap="${e=>this.fire(field, row, e.target, rowIdx)}"
+          ?disabled="${disabled}"
+          ?raised="${raised}">${v}</paper-button>`;
       }
       cl = "center";
     }
@@ -481,6 +523,8 @@ ${todo ? html`<paper-button raised @tap="${ e => todo(e) }" class="todo">${detai
         return this.inline ? this.inline(field, row, index) : {};
       }
       message = this._text('DELETE', this.topic);
+    } else if(message.detail) {
+      return message;
     }
 
     return {detail: this._inlineTodo(field, {
@@ -499,8 +543,10 @@ ${todo ? html`<paper-button raised @tap="${ e => todo(e) }" class="todo">${detai
     const doName = (atlines[index] || {}).do;
     let at = {}, multi = field.multi;
     if(doName == field.do || multi) {
+      let isFn = multi instanceof Function, closing = !!doName;
       for(var k in atlines) {
-        if(k != index) {
+        if(k != index && (!isFn || closing ||
+          (isFn && multi(atlines[k], this.data[k], k, doName)))) {
           at[k] = atlines[k];
         }
       }
@@ -509,6 +555,23 @@ ${todo ? html`<paper-button raised @tap="${ e => todo(e) }" class="todo">${detai
       }
     } else {
       at[index] = field;
+    }
+    this._atlines = at;
+  }
+
+  collapse(ignore) {
+    const atlines = this._atlines || {};
+    if(ignore === undefined) {
+      this._atlines = {};
+      return;
+    }
+    let at = {};
+    const ignores = ignore instanceof Array ? ignore : [ignore];
+    for(let i=0; i<ignores.length; i++) {
+      const k = ignores[i];
+      if(atlines[k]) {
+        at[k] = atlines[k];
+      }
     }
     this._atlines = at;
   }
