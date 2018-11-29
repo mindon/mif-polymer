@@ -161,7 +161,9 @@ html`<paper-input
   pattern="${pattern||''}"
   value="${view?view(current):current.desc||current.value||''}"
   ?readOnly="${readOnly||false}"
-  @blur=${ _ => this._tid = setTimeout(_ => this._viewable && (this._viewable=false), 120) }
+  @blur="${ _ => {
+    this._tid = setTimeout(_ => this._viewable && (this._viewable=false), 200)
+  } }"
   @value-changed=${
     evt => this.invalid = evt.target.invalid
   }
