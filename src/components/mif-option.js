@@ -10,7 +10,6 @@ class MifOption extends LitElement {
   static get properties() {
     return {
       data: {type: Array},
-      index: {type: Number},
       value: {type: String},
       required: {type: Boolean},
       pattern: {type: String},
@@ -33,21 +32,23 @@ class MifOption extends LitElement {
   prev() {
     if(this.off || this.date) {
       if(this.date && this.value) this._dateSlide(-1);
-      this.dispatchEvent(new CustomEvent('prev', {detail:this.index}));
+      this.dispatchEvent(new CustomEvent('prev', {detail:this._index}));
       return;
     }
-    if(this.index > 0) {
-      this.index--;
+    if(this._index > 0) {
+      this._index--;
+      this.value = this.data[this._index].value;
     }
   }
   next() {
     if(this.off || this.date) {
       if(this.date && this.value) this._dateSlide(1)
-      this.dispatchEvent(new CustomEvent('next', {detail:this.index}));
+      this.dispatchEvent(new CustomEvent('next', {detail:this._index}));
       return;
     }
-    if(this.index < this.data.length-1) {
-      this.index++;
+    if(this._index < this.data.length-1) {
+      this._index++;
+      this.value = this.data[this._index].value;
     }
   }
 
@@ -58,7 +59,7 @@ class MifOption extends LitElement {
 
   render() {
     let { label, icon, autofocus,
-      data, index, required, pattern,
+      data, required, pattern,
       disabled, off, noArrows, removable,
       readOnly, _viewable, view } = this;
 
@@ -66,35 +67,31 @@ class MifOption extends LitElement {
 
     if(!data) data = [];
     const value = this.value;
-    if(data.length > 0 &&
-     index === undefined) {
+    let _index = this._index;
+    if(data.length > 0) {
       if(value !== undefined) {
         for(let i=0; i<data.length; i++) {
           if(data[i].value == value) {
-            index = i;
-            this.index = i;
+            this._index = _index = i;
             break;
           }
         }
       }
-      if(index === undefined) {
-        index = 0;
-        this.index = index;
+      if(_index === undefined) {
+        this._index = _index = 0;
       }
     }
 
-    const max = data.length, current = data[index] || {};
+    const max = data.length, current = data[_index] || {value};
     const offCtl = (tag) => {
       return off?off(data, tag):disabled||max<2 ||
-       (index==0 && tag=='prev') ||
-       (index==max-1 && tag=='next');
+       (_index==0 && tag=='prev') ||
+       (_index==max-1 && tag=='next');
     }
-
-    const v = data[index] || {value};
-    if(data.length > 0 && data[index] && v.value != this.value) {
-      this.value = v.value;
+    if(value != this._lastValue) {
       _viewable = false;
-      this.dispatchEvent(new CustomEvent('value-changed', {detail:{value: v.value, data:v}}));
+      this.dispatchEvent(new CustomEvent('value-changed', {detail:{value: value, data:current}}));
+      this._lastValue = value;
     }
 
     if(disabled) {
@@ -155,7 +152,7 @@ html`<mif-time
   ?disabled="${disabled}"
   ?read-only="${readOnly}"
   label="${label}"
-  value="${v.value||''}"
+  value="${current.value||''}"
   format="Y/m/d" 
   min="${this.date.min||''}"
   max="${this.date.max||''}"
@@ -164,7 +161,6 @@ html`<mif-time
     this.value = evt.detail;
     this.invalid = evt.target.invalid;
     this.data=[{value:evt.detail}];
-    this.dispatchEvent(new CustomEvent('value-changed', {detail:{value:this.value, data:this.data}}));
   } }"
   @next-focus="${
     _ => this.dispatchEvent(new CustomEvent('next-focus', {detail: this.value, target: this}))
@@ -202,15 +198,16 @@ html`<paper-input
 <paper-icon-button ?hidden=${noArrows} ?disabled="${offCtl('next')}" @tap="${_ => this.next()}" icon="chevron-right"></paper-icon-button>
 </div><div ?hidden=${!_viewable}><paper-listbox
   @tap="${_ =>this.toggle()}"
-  selected="${index||0}"
+  selected="${_index||0}"
   @selected-changed="${ evt => {
     if(data.length==0) return;
-    this.index = evt.detail.value;
+    this._index = evt.detail.value;
+    this.value = data[this._index].value;
     this._viewable = false;
   } }">${
-  data.map(d => html`<paper-item value="${d.value}"><div class="item ${removable&&d.value!=v.value?'removable':''}">
+  data.map(d => html`<paper-item value="${d.value}"><div class="item ${removable&&d.value!=current.value?'removable':''}">
   <label>${view?view(d):d.desc||d.value||''}</label>
-  ${removable&&d.value!=v.value?html`<paper-icon-button icon="close" @tap="${
+  ${removable&&d.value!=current.value?html`<paper-icon-button icon="close" @tap="${
     evt => {
       this._remove(d);
       evt.stopPropagation();
@@ -255,7 +252,8 @@ html`<paper-input
         data.push(d);
       }
       this.data = data.slice(0);
-      this.index = idx;
+      this._index = idx;
+      this.value = data[idx].value;
       this.dispatchEvent(new CustomEvent('data-changed', {detail: {data: this.data, index: idx}}));
     }
     if(!this.query) {
@@ -266,7 +264,8 @@ html`<paper-input
       if(idx < 0 || data[idx].desc == undefined) {
         this.query(v, cb);
       } else {
-        this.index = idx;
+        this._index = idx;
+        this.value = data[idx].value;
       }
     }
     if(!this.invalid) {
@@ -282,10 +281,10 @@ html`<paper-input
       }
       data.splice(i,1);
       this.data = data.slice(0);
-      if(this.index > i) {
-        this.index = this.index -1;
+      if(this._index > i) {
+        this._index--;
       }
-      this.dispatchEvent(new CustomEvent('data-changed', {detail: {data: data, index: this.index||0}}));
+      this.dispatchEvent(new CustomEvent('data-changed', {detail: {data: data, index: this._index||0}}));
       break
     }
   }
