@@ -205,6 +205,7 @@ class MifTime extends LitElement {
   }
 
   _keyPressed(evt) {
+    this.dispatchEvent(new CustomEvent('keydown', {keyCode: evt.keyCode}));
     if(evt.keyCode != 13) {
       return;
     }

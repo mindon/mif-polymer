@@ -90,8 +90,8 @@ class MifOption extends LitElement {
        (index==max-1 && tag=='next');
     }
 
-    const v = data[index] || {value:''};
-    if(data[index] && v.value != this.value) {
+    const v = data[index] || {value};
+    if(data.length > 0 && data[index] && v.value != this.value) {
       this.value = v.value;
       _viewable = false;
       this.dispatchEvent(new CustomEvent('value-changed', {detail:{value: v.value, data:v}}));
@@ -160,14 +160,18 @@ html`<mif-time
   min="${this.date.min||''}"
   max="${this.date.max||''}"
   auto-off="DATE" 
-  @value-changed=${evt => {
+  @value-changed="${ evt => {
     this.value = evt.detail;
     this.invalid = evt.target.invalid;
     this.data=[{value:evt.detail}];
-  }}
-  @next-focus=>${
+    this.dispatchEvent(new CustomEvent('value-changed', {detail:{value:this.value, data:this.data}}));
+  } }"
+  @next-focus="${
     _ => this.dispatchEvent(new CustomEvent('next-focus', {detail: this.value, target: this}))
-  }></mif-time>`:
+  }"
+  @keydown="${
+    evt => this._keyPressed(evt, offCtl)
+  }"></mif-time>`:
 html`<paper-input
   tab-index="0"
   label="${label}"
@@ -181,21 +185,21 @@ html`<paper-input
   @blur="${ _ => {
     this._tid = setTimeout(_ => this._viewable && (this._viewable=false), 200)
   } }"
-  @value-changed=${
+  @value-changed="${
     evt => this.invalid = evt.target.invalid
-  }
-  @tap=${_=>readOnly&&this.toggle()}
-  @keydown=${evt => this._keyPressed(evt, offCtl)}>
+  }"
+  @tap="${_ => readOnly&&this.toggle()}"
+  @keydown="${evt => this._keyPressed(evt, offCtl)}">
   <paper-icon-button slot="prefix" icon="${icon||'fingerprint'}"></paper-icon-button>
   <slot slot="suffix" name="list">
     <paper-icon-button
       ?disabled="${offCtl('list')}"
-      @tap=${_ =>!readOnly&&this.toggle()}
+      @tap="${_ =>!readOnly&&this.toggle()}"
       icon="more-vert"></paper-icon-button>
   </slot>
 </paper-input>`
 }
-<paper-icon-button ?hidden=${noArrows} ?disabled="${offCtl('next')}" @tap=${_ => this.next()} icon="chevron-right"></paper-icon-button>
+<paper-icon-button ?hidden=${noArrows} ?disabled="${offCtl('next')}" @tap="${_ => this.next()}" icon="chevron-right"></paper-icon-button>
 </div><div ?hidden=${!_viewable}><paper-listbox
   @tap="${_ =>this.toggle()}"
   selected="${index||0}"
@@ -206,13 +210,13 @@ html`<paper-input
   } }">${
   data.map(d => html`<paper-item value="${d.value}"><div class="item ${removable&&d.value!=v.value?'removable':''}">
   <label>${view?view(d):d.desc||d.value||''}</label>
-  ${removable&&d.value!=v.value?html`<paper-icon-button icon="close" @tap=${
+  ${removable&&d.value!=v.value?html`<paper-icon-button icon="close" @tap="${
     evt => {
       this._remove(d);
       evt.stopPropagation();
       return false;
     }
-  }></paper-icon-button>`:''}</div></paper-item>`)
+  }"></paper-icon-button>`:''}</div></paper-item>`)
 }</paper-listbox></div>`
   }
 
@@ -296,7 +300,11 @@ html`<paper-input
     const t = new Date(this.value);
     if(t.setTime) {
       t.setTime(t.getTime() + offset*24*3600*1000);
-      this.data = [{value:[t.getFullYear(), ('0'+(t.getMonth()+1)).slice(-2), ('0'+t.getDate()).slice(-2)].join('/')}];
+      const value = [t.getFullYear(),
+        ('0'+(t.getMonth()+1)).slice(-2),
+        ('0'+t.getDate()).slice(-2)].join('/');
+      this.value = value;
+      this.data = [{value}];
     }
   }
 }
