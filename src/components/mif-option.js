@@ -65,7 +65,24 @@ class MifOption extends LitElement {
     if(this.date && !off) off = (data, tag)=>this._dateOff(data, tag);
 
     if(!data) data = [];
-    if(!index) index = 0;
+    const value = this.value;
+    if(data.length > 0 &&
+     index === undefined) {
+      if(value !== undefined) {
+        for(let i=0; i<data.length; i++) {
+          if(data[i].value == value) {
+            index = i;
+            this.index = i;
+            break;
+          }
+        }
+      }
+      if(index === undefined) {
+        index = 0;
+        this.index = index;
+      }
+    }
+
     const max = data.length, current = data[index] || {};
     const offCtl = (tag) => {
       return off?off(data, tag):disabled||max<2 ||
@@ -179,15 +196,22 @@ html`<paper-input
 </paper-input>`
 }
 <paper-icon-button ?hidden=${noArrows} ?disabled="${offCtl('next')}" @tap=${_ => this.next()} icon="chevron-right"></paper-icon-button>
-</div><div ?hidden=${!_viewable}><paper-listbox @tap=${_ =>this.toggle()} .selected=${index||0} @selected-changed=${evt => {
-  if(data.length==0) return;
-  this.index = evt.detail.value;
-  this._viewable = false;
-}}>${
-  data.map(d => html`<paper-item><div class="item ${removable&&d.value!=v.value?'removable':''}">
+</div><div ?hidden=${!_viewable}><paper-listbox
+  @tap="${_ =>this.toggle()}"
+  selected="${index||0}"
+  @selected-changed="${ evt => {
+    if(data.length==0) return;
+    this.index = evt.detail.value;
+    this._viewable = false;
+  } }">${
+  data.map(d => html`<paper-item value="${d.value}"><div class="item ${removable&&d.value!=v.value?'removable':''}">
   <label>${view?view(d):d.desc||d.value||''}</label>
   ${removable&&d.value!=v.value?html`<paper-icon-button icon="close" @tap=${
-    evt => { this._remove(d); evt.stopPropagation(); return false }
+    evt => {
+      this._remove(d);
+      evt.stopPropagation();
+      return false;
+    }
   }></paper-icon-button>`:''}</div></paper-item>`)
 }</paper-listbox></div>`
   }
@@ -254,6 +278,9 @@ html`<paper-input
       }
       data.splice(i,1);
       this.data = data.slice(0);
+      if(this.index > i) {
+        this.index = this.index -1;
+      }
       this.dispatchEvent(new CustomEvent('data-changed', {detail: {data: data, index: this.index||0}}));
       break
     }
