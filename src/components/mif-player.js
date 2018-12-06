@@ -73,7 +73,6 @@ ${this._error ? html`<div id="error">${this._error}div></div>`: ''}
     let _ctl = this._ctl, tag = this.type=='video' ? 'video' : 'audio';
     if(!_ctl || _ctl.tagName != tag.toUpperCase()) {
       _ctl = this.renderRoot.querySelector(tag);
-      this._listen(_ctl);
       this._ctl = _ctl;
     }
     return _ctl;
@@ -174,7 +173,7 @@ ${this._error ? html`<div id="error">${this._error}div></div>`: ''}
   preload="${preload||'none'}"
   poster="${poster||'src/joox-beta/assets/logo.png'}"
   @loadedmetadata="${ evt => {
-    this._fire('meta', evt)
+    this._fire('meta', evt);
     this.debugging && console.log(evt, 'loadedmetadata');
   }}"
   @durationchange="${ evt => {

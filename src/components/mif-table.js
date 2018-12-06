@@ -27,7 +27,7 @@ class MifTable extends LitElement {
 
       _atlines: {type: Object}, // {row index: do-name}
       slim: {type: Number},
-      rowTrigger: {type: Object},
+      rowTapTask: {type: Object},
     }
   }
 
@@ -243,17 +243,14 @@ class MifTable extends LitElement {
         colIndex = 0;
         // body row
         return html`<tr
+          idx="${rowIndex-1}"
           class="${ rowIndex%2==0?'row-1':'row-0' }"
           style="${ this._styleRow(row, rowIndex-1) }"
-          @click="${ ((d, idx)=>{return e => {
-            const qn = this.rowTrigger, target = e.target;
-            if(qn) {
-              const tr = this._parentOf(target, 'TR');
-              if(!tr) return;
-              const t = tr.querySelector(qn.q);
-              if(!t || t==target) return;
-              if(qn.ignore && qn.ignore(fields[qn.n], d, t, idx)) return;
-              this.fire(fields[qn.n], d, t, idx);
+          @click="${ ((row, idx)=>{return e => {
+            const rtt = this.rowTapTask;
+            if(rtt && rtt.todo) {
+              if(rtt.ignore && rtt.ignore({index:idx})) return;
+              this.trigger(idx, rtt.todo, e.target);
             }
           }})(row, rowIndex -1) }">${
           fields.map(field => {
@@ -287,17 +284,6 @@ class MifTable extends LitElement {
       ${ (!pagingHide || pagingHide!="top" ? paging :'') }
       <table>${ header } ${ body } </table>
       ${ !pagingHide || pagingHide.indexOf("bot") != 0 ? paging :''}`;
-  }
-
-  _parentOf(n, tag) {
-    while(n && n.tagName != tag) {
-      n = n.parentNode;
-      if(n == this.renderRoot) {
-        n = null;
-        break
-      }
-    }
-    return n;
   }
 
   _header(field, colIdx) {
@@ -460,12 +446,14 @@ class MifTable extends LitElement {
       }
       if(field.ico) {
         v = html`<paper-icon-button
+          todo="${field.do}"
           style="${ buttonStyle }"
           @tap="${e=>this.fire(field, row, e.target, rowIdx)}"
           ?disabled="${disabled}"
           icon="${field.ico}">${v}</paper-icon-button>`;
       } else {
         v = html`<paper-button
+          todo="${field.do}"
           style="${ buttonStyle }"
           @tap="${e=>this.fire(field, row, e.target, rowIdx)}"
           ?disabled="${disabled}"
@@ -588,6 +576,41 @@ ${todo ? html`<paper-button raised @tap="${ e => todo(e) }" class="todo">${detai
       window.dispatchEvent(new CustomEvent('debug', {detail: {topic: field.desc||field.name||'', body: row[field.key]}}));
     } else {
       this.dispatchEvent(new CustomEvent(name, {detail: {field, row, target, index}}));
+    }
+  }
+
+  trigger(index, name, ignored) {
+    const row = this.data[index];
+    if(!row) {
+      return false;
+    }
+    const tr = this.renderRoot.querySelector('tr[idx="'+index+'"]');
+    if(!tr) {
+      return false;
+    }
+    const target = tr.querySelector('[todo="'+name+'"]');
+    if(target == ignored ||
+      (ignored instanceof Function &&
+       ignored({target, row, index}))) {
+      return target;
+    }    
+    if(ignored === true) {
+      const ntr = tr.nextElementSibling;
+      if(ntr && ntr.firstChild && ntr.firstChild.classList &&
+        ntr.firstChild.classList.contains('inline')) {
+        return false;
+      }
+    }
+    if(!target) {
+      return false;
+    }
+
+    const fields = this.fields;
+    for(let i=0; i<fields.length; i++) {
+      if(fields[i].do == name) {
+        this.fire(fields[i], row, target, index);
+        return target;
+      }
     }
   }
 }

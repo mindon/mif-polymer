@@ -23,7 +23,7 @@ class MifPaging extends LitElement {
       },
       'INFO': {
         'en': ({total, max}) => html`<strong>${total}</strong> items / ${max} pages`,
-        'zh': ({total, max}) => html`<strong>${total}</strong> 项 / ${max} 页`
+        'zh': ({total, max}) => html`<strong>${total}</strong> 项 / ${max} 页`,
       },
     };
   }
