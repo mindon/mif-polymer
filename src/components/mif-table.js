@@ -247,9 +247,31 @@ class MifTable extends LitElement {
           class="${ rowIndex%2==0?'row-1':'row-0' }"
           style="${ this._styleRow(row, rowIndex-1) }"
           @click="${ ((row, idx)=>{return e => {
+            if(e.target) {
+              let t = e.target;
+              if(t.getAttribute('todo')) {
+                return // skip
+              }
+              if(t.tagName != 'TR') { // any other element, find its td parent
+                while(t.tagName != 'TD') {
+                  t = t.parentNode;
+                  if(t && t.tagName == 'TR') {
+                    break;
+                  }
+                }
+              }
+              if(t && t.tagName=='TD' && (
+                t.querySelector('[todo]') ||
+                t.querySelector('a') ||
+                t.querySelector('paper-button') ||
+                t.querySelector('paper-icon-button')
+              )) {
+                return // skip
+              }
+            }
             const rtt = this.rowTapTask;
             if(rtt && rtt.todo) {
-              if(rtt.ignore && rtt.ignore({index:idx})) return;
+              if(rtt.ignore && rtt.ignore({index:idx, target:e.target, row: row})) return;
               this.trigger(idx, rtt.todo, e.target);
             }
           }})(row, rowIndex -1) }">${
@@ -442,7 +464,7 @@ class MifTable extends LitElement {
       // button view
       let buttonStyle = field.css instanceof Function ? field.css(field, row) : field.css || '';
       if(!raised && field.inline) {
-        buttonStyle = 'color: #d50000';
+        buttonStyle = 'color: #d50000' +(field.ico?';width:100%;':'');
       }
       if(field.ico) {
         v = html`<paper-icon-button
