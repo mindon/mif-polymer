@@ -255,13 +255,15 @@ html`<paper-input
       this._index = idx;
       this.value = data[idx].value;
       this.dispatchEvent(new CustomEvent('data-changed', {detail: {data: this.data, index: idx}}));
-    }
+    };
     if(!this.query) {
       cb({value:v});
     } else {
-      const idx = indexOf({value:v}, this.data||[]);
+      const data = this.data || [];
+      const idx = indexOf({value:v}, data);
       // avoid duplicated query
-      if(idx < 0 || data[idx].desc == undefined) {
+      if(idx < 0 || !data[idx] ||
+       data[idx].desc == undefined) {
         this.query(v, cb);
       } else {
         this._index = idx;

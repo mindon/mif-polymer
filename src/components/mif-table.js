@@ -227,10 +227,11 @@ class MifTable extends LitElement {
 
       // header item
       return html`${prefix?xheaders:''}<th
- class="${field.do?'center':'left'}" 
- style="${(field.order?'cursor:default':'')+(field.style?';'+field.style:'')}"
- @click="${ evt => { if(field.order) this._orderToggle(field, colIndex-1, evt.target) } }">${ this._header(field, colIndex-1)}
- ${ field.order ? html` <iron-icon icon="${ this._orderDesc(field) ? 'expand-more':'expand-less' }"></iron-icon>` : '' }
+  class="${ field.do?'center':'left' }" 
+  style="${ (field.order?'cursor:default':'')+(field.style?';'+field.style:'') }"
+  @click="${ evt => { if(field.order) this._orderToggle(field, colIndex-1, evt.target) } }">
+${ this._header(field, colIndex-1)}
+${ field.order ? html` <iron-icon icon="${ this._orderDesc(field) ? 'expand-more':'expand-less' }"></iron-icon>` : '' }
 </th>${!prefix?xheaders:''}`;
     })}</tr></thead>`; // header
 

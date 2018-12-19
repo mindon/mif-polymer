@@ -18,6 +18,9 @@ class MifPlayer extends LitElement {
   constructor() {
     super();
     this._videoSupports = [
+      {rule: /\.mpeg([\?&#].*)?$/i, type: 'video/mpeg'},
+      {rule: /\.mpg([\?&#].*)?$/i, type: 'video/mpeg'},
+      {rule: /\.avi([\?&#].*)?$/i, type: 'video/avi'},
       {rule: /\.mp4([\?&#].*)?$/i, type: 'video/mp4'},
       {rule: /\.ogg([\?&#].*)?$/i, type: 'video/ogg'},
       {rule: /\.webm([\?&#].*)?$/i, type: 'video/webm'},
@@ -30,8 +33,30 @@ class MifPlayer extends LitElement {
     ];
   }
 
+  _isType(src, ss) {
+    for(let i=0; i<ss.length; i++) {
+      if(ss[i].rule.test(src)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   render() {
-    const {type, src, controls, autoplay, preload, volume, poster} = this;
+    const {src, controls, autoplay, preload, volume, poster} = this;
+    let type = this.type;
+
+    if(type == 'auto') {
+      if(this._isType(src, this._videoSupports)) {
+        type = 'video';
+      } else {
+        type = 'audio';
+      }
+      if(type != this.type) {
+        this.pause();
+        this.type = type;
+      }
+    }
 
     let opts = {controls, autoplay, preload, volume, poster};
     opts.position = 0; // TODO
@@ -80,26 +105,42 @@ ${this._error ? html`<div id="error">${this._error}div></div>`: ''}
 
   play(src) {
     const m = this._player();
+    if(!m) {
+      console.error('invalid media type::' +this.type);
+      return;
+    }
     if(!src && this.status!='play') {
       m.play();
       return
     }
     this.pause(m);
     if(src) {
-      m.ready = false;
-      this.src = src;
+      m.currentTime = 0;
+      if(this.src != src) {
+        this._waiting = true;
+        this.src = src;
+        m.load();
+      }
+      m.play();
     }
-    m.waiting = true;
   }
 
   pause(m) {
     if(!m) m = this._player();
-    m.playing && m.pause();
-    m.waiting = false;
+    if(!m) {
+      console.error('invalid media type::' +this.type);
+      return;
+    }
+    m.pause();
+    this._waiting = false;
   }
 
   reset(m) {
     if(!m) m = this._player();
+    if(!m) {
+      console.error('invalid media type::' +this.type);
+      return;
+    }
     m.currentTime = 0; // audio
   }
 
@@ -224,16 +265,26 @@ ${this._error ? html`<div id="error">${this._error}div></div>`: ''}
           this.error = detail;
         }
       }
+      if(this._waiting && (status == 'error' || status == 'pause' || status == 'play')) {
+        this._waiting = false;
+      }
       if(this.status != status) {
         if(this.status != 'error' || status != 'pause') {
           if(this.error && status != 'error') {
             this.error = null;
+          }
+          if(this._waiting && status=='meta') {
+            this._player().play();
           }
           this.status = status;
           this.dispatchEvent(new CustomEvent("status-changed", {detail:status, target:this}));
         }
       }
     } else {
+      if(this._waiting && detail.currentTime === 0) {
+        this._waiting = false;
+        this._player().play();
+      }
       this.currentTime = detail.currentTime;
     }
     if(!detail) detail= {};
