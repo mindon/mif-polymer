@@ -84,6 +84,7 @@ class MifOption extends LitElement {
 
     const max = data.length, current = data[_index] || {value};
     const offCtl = (tag) => {
+      if(disabled) return true;
       return off?off(data, tag):disabled||max<2 ||
        (_index==0 && tag=='prev') ||
        (_index==max-1 && tag=='next');
@@ -152,7 +153,7 @@ html`<mif-time
   ?disabled="${disabled}"
   ?read-only="${readOnly}"
   label="${label}"
-  value="${current.value||''}"
+  value="${value||''}"
   format="Y/m/d" 
   min="${this.date.min||''}"
   max="${this.date.max||''}"
