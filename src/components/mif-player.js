@@ -179,6 +179,10 @@ ${this._error ? html`<div id="error">${this._error}div></div>`: ''}
     this._fire('play', evt);
     this.debugging && console.log(evt, 'play');
   }}"
+  @canplaythrough="${ evt => {
+    this._fire('canplaythrough', evt);
+    this.debugging && console.log(evt, 'canplaythrough');
+  }}"
   @timeupdate="${ evt => {
     const currentTime = evt.target.currentTime;
     this._fire('time', evt, {currentTime});
@@ -225,6 +229,10 @@ ${this._error ? html`<div id="error">${this._error}div></div>`: ''}
   @play="${ evt => {
     this._fire('play', evt);
     this.debugging && console.log(evt, 'play');
+  }}"
+  @canplaythrough="${ evt => {
+    this._fire('canplaythrough', evt);
+    this.debugging && console.log(evt, 'canplaythrough');
   }}"
   @timeupdate="${ evt => {
     const currentTime = evt.target.currentTime;
@@ -273,8 +281,14 @@ ${this._error ? html`<div id="error">${this._error}div></div>`: ''}
           if(this.error && status != 'error') {
             this.error = null;
           }
-          if(this._waiting && status=='meta') {
-            this._player().play();
+          if(this._waiting) {
+            if(status=='canplaythrough') {
+              this._waiting = false;
+              this._player().play();
+            }
+            if(status=='meta') {
+              this._player().play();
+            }
           }
           this.status = status;
           this.dispatchEvent(new CustomEvent("status-changed", {detail:status, target:this}));

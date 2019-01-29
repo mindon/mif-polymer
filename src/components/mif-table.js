@@ -24,6 +24,7 @@ class MifTable extends LitElement {
       numPerPage: {type: Number, attribute: 'num-per-page'},
       total: {type: Number},
       pagingHide: {type: String, attribute: 'paging-hide'},
+      flowing: {type: Boolean},
 
       _atlines: {type: Object}, // {row index: do-name}
       slim: {type: Number},
@@ -159,6 +160,16 @@ class MifTable extends LitElement {
   div.paging {
     text-align: var(--paging-text-align, center);
   }
+  #load-next-page {
+    text-align: center;
+    position: relative;
+    margin-top: 1em;
+  }
+  #gotop {
+    position: absolute;
+    right: 0;
+    top: 0;
+  }
 </style>
 <custom-style>`;
 
@@ -187,6 +198,10 @@ class MifTable extends LitElement {
         'en': 'No',
         'zh': '取消'
       },
+      'MORE': {
+        'en': 'More …',
+        'zh': '更多 …'
+      },
     };   
   }
 
@@ -212,7 +227,9 @@ class MifTable extends LitElement {
   render() {
     const {topic, fields, data, slim,
       features, _atlines, emptyMessage,
-      pageNum, numPerPage, total, pagingHide} = this;
+      pageNum, numPerPage, total,
+      flowing,
+      pagingHide} = this;
 
     // header
     let colIndex = 0, cols = 0, colf = {}, _iff = this._conff(features, fields.length);
@@ -292,7 +309,10 @@ ${ field.order ? html` <iron-icon icon="${ this._orderDesc(field) ? 'expand-more
     // paging view
     let npp = numPerPage;
     if(!npp) npp = 8;
-    const paging = total && total > numPerPage ? html`<div class="paging"><mif-paging
+    if(!this._npp) {
+      this._npp = npp;
+    }
+    const paging = !flowing && total && total > numPerPage ? html`<div class="paging"><mif-paging
       lang="${this.lang}"
       total="${total}"
       num-per-page="${npp}"
@@ -306,7 +326,21 @@ ${ field.order ? html` <iron-icon icon="${ this._orderDesc(field) ? 'expand-more
     return html`${this.__styles}
       ${ (!pagingHide || pagingHide!="top" ? paging :'') }
       <table>${ header } ${ body } </table>
-      ${ !pagingHide || pagingHide.indexOf("bot") != 0 ? paging :''}`;
+      ${ !pagingHide || pagingHide.indexOf("bot") != 0 ? paging :''}
+      ${ flowing && total && total > numPerPage ? html`<div id="load-next-page">
+        <paper-button id="gotop" @tap="${
+          _ => {
+            window.scrollTo(0, 0);
+          }
+        }">↸</paper-button>
+        <paper-button @tap="${
+          _ => {
+            this.pageNum = pageNum +1;
+            this.numPerPage = this.pageNum * this._npp;
+            this.dispatchEvent(new CustomEvent('page-num-changed', {detail: this.pageNum}))
+          }
+        }">${this._text('MORE')}</paper-button>
+      </div>` : '' }`;
   }
 
   _header(field, colIdx) {

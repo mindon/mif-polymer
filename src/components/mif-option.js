@@ -24,6 +24,7 @@ class MifOption extends LitElement {
       date: {type: Object},
       off: {type: Function},
       view: {type: Function},
+      blurIf: {type: Function},
       query: {type: Function},
       removable: {type: Boolean},
     }
@@ -53,7 +54,10 @@ class MifOption extends LitElement {
   }
 
   toggle() {
-    if(this._tid) clearTimeout(this._tid);
+    if(this._tid) {
+      clearTimeout(this._tid);
+      this._tid = undefined;
+    }
     this._viewable = !this._viewable;
   }
 
@@ -179,11 +183,25 @@ html`<paper-input
   pattern="${pattern||''}"
   value="${view?view(current):current.desc||current.value||''}"
   ?readOnly="${readOnly||false}"
-  @blur="${ _ => {
-    this._tid = setTimeout(_ => this._viewable && (this._viewable=false), 200)
+  @focus="${ _ => {
+    if(this._tid) clearTimeout(this._tid);
+  } }"
+  @blur="${ evt => {
+    if(this._tid) clearTimeout(this._tid);
+    this._tid = setTimeout(_ => this._viewable && this._tid && (this._viewable=false), 200);
+    this.dispatchEvent(new CustomEvent('blur', {detail: this.value, target: this}));
+    if(!this._busying && this.blurIf) {
+      const v = evt.target.value;
+      this.blurIf(v, data, ()=>{
+        this._keyPressed(v, offCtl);
+      })
+    }
   } }"
   @value-changed="${
-    evt => this.invalid = evt.target.invalid
+    evt => {
+      this.invalid = evt.target.invalid;
+      this.dispatchEvent(new CustomEvent('value-changed', {detail: this.value, target: this}));
+    }
   }"
   @tap="${_ => readOnly&&this.toggle()}"
   @keydown="${evt => this._keyPressed(evt, offCtl)}">
@@ -219,22 +237,28 @@ html`<paper-input
   }
 
   _keyPressed(evt, offCtl) {
-    const kc = evt.keyCode
-    if(kc == 38 || (kc==37 && this.readOnly)) {// up arrow
-      if(offCtl && !offCtl('prev')) {
-        this.prev()
-        return
+    let v = '';
+    if(typeof evt == 'string') {
+      v = evt;
+    } else {
+      v = evt.target.value;
+      const kc = evt.keyCode;
+      if(kc == 38 || (kc==37 && this.readOnly)) {// up arrow
+        if(offCtl && !offCtl('prev')) {
+          this.prev();
+          return;
+        }
+      } else if(kc == 40 || (kc==39 && this.readOnly)) {
+        if(offCtl && !offCtl('next')) {
+          this.next();
+          return;
+        }
       }
-    } else if(kc == 40 || (kc==39 && this.readOnly)) {
-      if(offCtl && !offCtl('next')) {
-        this.next()
-        return
+      if(kc != 13) {
+        return;
       }
     }
-    if(kc != 13) {
-      return;
-    }
-    const v = evt.target.value;
+
     const indexOf = (d, data)=>{
       for(let i=0; i<data.length; i++) {
         if(data[i].value==d.value) {
@@ -244,6 +268,7 @@ html`<paper-input
       return -1;
     }
     const cb = (d)=>{
+      this._busying = false;
       const data = this.data || [];
       let idx = indexOf(d, data);
       if(idx > -1) {
@@ -265,7 +290,10 @@ html`<paper-input
       // avoid duplicated query
       if(idx < 0 || !data[idx] ||
        data[idx].desc == undefined) {
-        this.query(v, cb);
+        if(!this._busying) {
+          this._busying = true;
+          this.query(v, cb);
+        }
       } else {
         this._index = idx;
         this.value = data[idx].value;
