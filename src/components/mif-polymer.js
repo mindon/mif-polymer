@@ -14,7 +14,6 @@ import { installMediaQueryWatcher } from 'pwa-helpers/media-query.js';
 import { installOfflineWatcher } from 'pwa-helpers/network.js';
 import { installRouter } from 'pwa-helpers/router.js';
 import { updateMetadata } from 'pwa-helpers/metadata.js';
-import { unsafeHTML } from 'lit-html/directives/unsafe-html.js';
 
 // These are the elements needed by this element.
 import '@polymer/app-layout/app-drawer/app-drawer.js';
@@ -176,7 +175,7 @@ appTitle ? html`
   <app-header condenses reveals effects="waterfall">
     <app-toolbar class="toolbar-top">
       <button class="menu-btn" title="Menu" @click="${_ => this._updateDrawerState(true)}">${MifIcon.Menu}</button>
-      <div main-title>${unsafeHTML(appTitle)}</div>
+      <div main-title>${appTitle}</div>
     </app-toolbar>${
 appNavs && appNavs.length > 0 ? html`
     <!-- This gets hidden on a small screen-->
