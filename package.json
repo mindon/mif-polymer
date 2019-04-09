@@ -50,6 +50,7 @@
     "@polymer/polymer": "^3.2.0",
     "@webcomponents/webcomponentsjs": "^2.2.7",
     "lit-element": "^2.1.0",
+    "lit-html": "^1.0.0",
     "pwa-helpers": "^0.8.4",
     "require": "^2.4.20",
     "rollup": "^0.66.6",
