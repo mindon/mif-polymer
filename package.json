@@ -57,6 +57,7 @@
     "rollup-plugin-filesize": "^5.0.1",
     "rollup-plugin-node-resolve": "^3.4.0",
     "rollup-plugin-terser": "^3.0.0",
+    "web-animations-js": "^2.3.1",
     "web-component-tester": "github:Polymer/web-component-tester"
   },
   "devDependencies": {
