@@ -1,5 +1,5 @@
 // base on https://github.com/gorork/paper-audio-player
-import {LitElement, html, customElement} from '@polymer/lit-element';
+import {LitElement, html, customElement} from 'lit-element';
 
 class MifPlayer extends LitElement {
   static get properties() {

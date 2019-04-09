@@ -1,4 +1,4 @@
-import { LitElement, html } from '@polymer/lit-element';
+import { LitElement, html } from 'lit-element';
 
 import { MifView } from '../components/mif-view.js';
 import { SharedStyles } from '../components/shared-styles.js';
