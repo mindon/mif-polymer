@@ -202,7 +202,7 @@ appNavs && appNavs.length > 0 ? html`
   ${ _page ? html`<app-viewer page="${_page}"></app-viewer>`: '#Mif# Polymer App' }
 </main>
 <footer>
-  <p>${appPowered ? html`${unsafeHTML(appPowered)}`:'&heart; 2018. MINDON.if Powered by Polymer Project'}</p>
+  <p>${appPowered ? html`${appPowered}`:'&heart; 2018. MINDON.if Powered by Polymer Project'}</p>
 </footer>
 <snack-bar ?active="${_snackbarOpened}">
   you are ${_offline ? html`<b style="color:#ff6">offline</b>` : html`<b style="color:#0b0">online</b>`} now.
